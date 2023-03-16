@@ -2,7 +2,7 @@ import { ObjectId } from "mongo";
 import { db } from "../db.ts";
 import { z } from "zod";
 
-export interface FriendSchema {
+export interface EventSchema {
   _id: ObjectId;
   name: string;
   type: "IRL" | "APP";
@@ -14,10 +14,9 @@ export interface FriendSchema {
   images: string[];
   videos?: string[];
   markdown: string;
-  userId?: ObjectId;
 }
 
-export const FriendParser = z.object({
+export const eventParser = z.object({
   _id: z.instanceof(ObjectId),
   name: z.string(),
   type: z.enum(["IRL", "APP"]),
@@ -29,7 +28,6 @@ export const FriendParser = z.object({
   images: z.array(z.string()),
   videos: z.array(z.string()),
   markdown: z.string(),
-  userId: z.string() || z.instanceof(ObjectId) || z.undefined(),
 });
 
-export const Friends = db.collection<FriendSchema>("Friends");
+export const Events = db.collection<EventSchema>("events");
