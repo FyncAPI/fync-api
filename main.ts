@@ -3,10 +3,12 @@ import "https://deno.land/std@0.127.0/dotenv/load.ts";
 
 // import { User } from "@/models/user.ts";
 import { usersRouter } from "@/routes/user.route.ts";
+import { appsRouter } from "./routes/app.route.ts";
 const app = new Application();
 const router = new Router();
 
 router.use("/users", usersRouter.routes());
+router.use("/apps", appsRouter.routes());
 
 router.get("/", (ctx) => {
   ctx.response.body = "Hello World From Deno Edge";
