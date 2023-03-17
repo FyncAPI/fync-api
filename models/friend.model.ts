@@ -5,12 +5,7 @@ import { z } from "zod";
 export interface FriendSchema {
   _id: ObjectId;
   name: string;
-  type: "IRL" | "APP";
-  tags: string[];
   description: string;
-  mapsLink: string;
-  date: Date;
-  location: string;
   images: string[];
   videos?: string[];
   markdown: string;
@@ -20,12 +15,6 @@ export interface FriendSchema {
 export const FriendParser = z.object({
   _id: z.instanceof(ObjectId),
   name: z.string(),
-  type: z.enum(["IRL", "APP"]),
-  tags: z.array(z.string()),
-  description: z.string(),
-  mapsLink: z.string(),
-  date: z.date(),
-  location: z.string(),
   images: z.array(z.string()),
   videos: z.array(z.string()),
   markdown: z.string(),

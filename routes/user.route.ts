@@ -27,7 +27,6 @@ usersRouter
       const user = await Users.insertOne({
         ...body,
         verified: false,
-        friends: [],
         createdAt: new Date(),
       });
       ctx.response.body = user;
