@@ -17,6 +17,8 @@ import { FriendParser } from "./friend.model.ts";
 
 export const userParser = z.object({
   _id: z.instanceof(ObjectId),
+  googleId: z.string(),
+
   username: z.string(),
   name: z.string(),
   avatar: z.string(),

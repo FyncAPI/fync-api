@@ -8,12 +8,17 @@ export const appParser = z.object({
   _id: z.instanceof(ObjectId),
   name: z.string(),
   description: z.string(),
+
   appStoreId: z.string().optional(),
   androidPackageName: z.string().optional(),
-  image: z.string(),
   url: z.string(),
+
+  redirectUrl: z.string(),
+
+  image: z.string(),
   users: z.array(z.instanceof(ObjectId)),
   events: z.array(z.instanceof(ObjectId)),
+
   createdAt: z.date(),
 });
 

@@ -8,6 +8,7 @@ export const appUserParser = z.object({
 
   fyncId: z.instanceof(ObjectId),
   appUserId: z.instanceof(ObjectId),
+
   appInteraction: z.object({
     friendshipCount: z.number(),
     eventCount: z.number(),
