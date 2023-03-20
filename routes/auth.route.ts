@@ -2,7 +2,10 @@ import { Router } from "oak";
 import DenoGrant, { OAuth2Client, Providers } from "deno_grant";
 
 const denoGrant = new DenoGrant({
-  base_uri: "http://localhost:8080",
+  base_uri:
+    Deno.env.get("ENV") == "dev"
+      ? "http://localhost:8080"
+      : "https://fync-api.deno.dev",
   strategies: [
     {
       provider: Providers.google,
