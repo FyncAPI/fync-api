@@ -34,7 +34,7 @@ app.use(router.allowedMethods());
 //console.log("Server running on port 8000");
 //await app.listen({ port: 8000 });
 app.addEventListener("listen", (e) =>
-  console.log("Listening on http://localhost:8000")
+  console.log("Listening on http://localhost:8080")
 );
 
-await app.listen({ port: 8000 });
+await app.listen({ port: 8080 });

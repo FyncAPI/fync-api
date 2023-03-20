@@ -2,7 +2,7 @@ import { Router } from "oak";
 import DenoGrant, { OAuth2Client, Providers } from "deno_grant";
 
 const denoGrant = new DenoGrant({
-  base_uri: "http://localhost:8000",
+  base_uri: "http://localhost:8080",
   strategies: [
     {
       provider: Providers.google,
