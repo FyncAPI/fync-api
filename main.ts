@@ -1,10 +1,12 @@
 import { Application, Router } from "oak";
+import { z } from "zod";
 import "loadenv";
 
 // import { User } from "@/models/user.ts";
 import { usersRouter } from "@/routes/user.route.ts";
 import { appsRouter } from "@/routes/app.route.ts";
 import { authRouter } from "@/routes/auth.route.ts";
+
 const app = new Application();
 const router = new Router();
 
@@ -27,6 +29,24 @@ router.get("/", (ctx) => {
           
         `;
 });
+
+const envParser = z.object({
+  ENV: z.string(),
+  GOOGLE_CLIENT_ID: z.string(),
+  GOOGLE_CLIENT_SECRET: z.string(),
+
+  DB_SERVERS: z.string(),
+  DB_NAME: z.string(),
+  DB_USERNAME: z.string(),
+  DB_PASSWORD: z.string(),
+});
+
+const result = envParser.safeParse(Deno.env.toObject());
+
+if (!result.success) {
+  console.log(result.error);
+  Deno.exit(1);
+}
 
 app.use(router.routes());
 app.use(router.allowedMethods());

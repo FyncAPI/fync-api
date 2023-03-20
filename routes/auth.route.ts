@@ -9,9 +9,8 @@ const denoGrant = new DenoGrant({
   strategies: [
     {
       provider: Providers.google,
-      client_id:
-        "748868697696-6k75r69uus5mcraofn0lkqassrf5pg0r.apps.googleusercontent.com",
-      client_secret: "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",
+      client_id: Deno.env.get("GOOGLE_CLIENT_ID")!,
+      client_secret: Deno.env.get("GOOGLE_CLIENT_SECRET")!,
       redirect_path: "/auth/google/callback",
       scope: "email openid profile",
     },
