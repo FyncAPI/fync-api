@@ -10,7 +10,7 @@ const denoGrant = new DenoGrant({
         "748868697696-6k75r69uus5mcraofn0lkqassrf5pg0r.apps.googleusercontent.com",
       client_secret: "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",
       redirect_path: "/auth/google/callback",
-      scope: "openid profile",
+      scope: "email openid profile",
     },
   ],
 });
@@ -19,10 +19,39 @@ export const authRouter = new Router();
 
 authRouter.get("/google", (ctx) => {
   //   ctx.response.body = "Google Auth";
-  if (denoGrant) {
-    const googleAuthorizationURI = denoGrant
-      .getAuthorizationUri(Providers.google)
-      .toString();
+  const googleAuthorizationURI = denoGrant
+    ?.getAuthorizationUri(Providers.google)
+    ?.toString();
+
+  if (googleAuthorizationURI) {
     ctx.response.redirect(googleAuthorizationURI);
   }
+});
+
+authRouter.get("/google/callback", async (ctx) => {
+  const tokens = await denoGrant.getToken(Providers.google, ctx.request.url);
+
+  if (!tokens) {
+    ctx.response.body = {
+      error: "Invalid token",
+    };
+    return;
+  }
+
+  const profile = await denoGrant.getProfile(
+    Providers.google,
+    tokens.accessToken
+  );
+
+  if (!profile) {
+    ctx.response.body = {
+      error: "Invalid profile",
+    };
+    return;
+  }
+
+  ctx.response.body = {
+    profile,
+    tokens,
+  };
 });
