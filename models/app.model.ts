@@ -13,7 +13,7 @@ export const appParser = z.object({
   androidPackageName: z.string().optional(),
   url: z.string(),
 
-  redirectUrl: z.string(),
+  redirectUrl: z.string().optional(),
 
   image: z.string(),
   users: z.array(z.instanceof(ObjectId)),
@@ -25,6 +25,8 @@ export const appParser = z.object({
 export const createAppParser = appParser.omit({
   _id: true,
   createdAt: true,
+  users: true,
+  events: true,
 });
 
 export const Apps = db.collection<AppSchema>("apps");
