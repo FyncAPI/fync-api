@@ -7,7 +7,7 @@ export const appUserParser = z.object({
   app: z.instanceof(ObjectId),
 
   fyncId: z.instanceof(ObjectId),
-  appUserId: z.instanceof(ObjectId),
+  appUserId: z.string(),
 
   appInteraction: z.object({
     friendshipCount: z.number(),
@@ -24,4 +24,4 @@ export const createAppUserParser = appUserParser.omit({
   createdAt: true,
 });
 
-export const AppUsers = db.collection<AppUserSchema>("users");
+export const AppUsers = db.collection<AppUserSchema>("appUsers");
