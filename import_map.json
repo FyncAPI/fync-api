@@ -2,9 +2,11 @@
   "imports": {
     "@/": "./",
     "oak": "https://deno.land/x/oak@v11.1.0/mod.ts",
+    "imagemagick": "https://deno.land/x/imagemagick_deno@0.0.19/mod.ts",
     "mongo": "https://deno.land/x/mongo@v0.31.1/mod.ts",
     "loadenv": "https://deno.land/std@0.170.0/dotenv/load.ts",
     "deno_grant": "https://deno.land/x/deno_grant@v0.3.0/mod.ts",
+    "bcrypt": "https://deno.land/x/bcrypt@v0.4.1/mod.ts",
     "zod": "https://deno.land/x/zod@v3.16.1/mod.ts"
   }
 }

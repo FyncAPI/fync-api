@@ -23,7 +23,7 @@ router.get("/", (ctx) => {
       </head>
       <body>
         
-        <a href="/auth/google">Login with Google</a>
+        <h1>Welcome to Fync API</h1>
         </body>
         </html>
           
@@ -32,13 +32,15 @@ router.get("/", (ctx) => {
 
 const envParser = z.object({
   ENV: z.string(),
-  GOOGLE_CLIENT_ID: z.string(),
-  GOOGLE_CLIENT_SECRET: z.string(),
-
   DB_SERVERS: z.string(),
   DB_NAME: z.string(),
   DB_USERNAME: z.string(),
   DB_PASSWORD: z.string(),
+
+  B2APPKEY: z.string(),
+  B2KEYID: z.string(),
+  B2BUCKETNAME: z.string(),
+  B2BUCKETID: z.string(),
 });
 
 const result = envParser.safeParse(Deno.env.toObject());

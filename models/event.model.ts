@@ -28,6 +28,7 @@ export const eventParser = z.object({
   images: z.array(z.string()),
   videos: z.array(z.string()),
   markdown: z.string(),
+  interactions: z.array(z.instanceof(ObjectId)),
 });
 
 export const Events = db.collection<EventSchema>("events");

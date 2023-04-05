@@ -1,4 +1,4 @@
-import { MongoClient } from "mongo";
+import { Collection, MongoClient, ObjectId } from "mongo";
 import "https://deno.land/std@0.127.0/dotenv/load.ts";
 
 const envVars = Deno.env.toObject();

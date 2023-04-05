@@ -18,6 +18,7 @@ export const appParser = z.object({
   image: z.string(),
   users: z.array(z.instanceof(ObjectId)),
   events: z.array(z.instanceof(ObjectId)),
+  interactions: z.array(z.instanceof(ObjectId)),
 
   createdAt: z.date(),
 });

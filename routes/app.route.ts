@@ -27,9 +27,39 @@ appsRouter
       console.log(e);
       ctx.response.body = { message: "invalid app id" };
     }
+  });
+
+appsRouter
+  .post("/", async (ctx) => {
+    /**
+     * Create App account in fync api
+     *
+     */
+    const body = await ctx.request.body({ type: "json" }).value;
+    body._id = new ObjectId(ctx.params.id);
+    console.log(body);
+
+    const result = createAppParser.safeParse(body);
+    console.log(result);
+    // console.log(body instanceof UserSchema);
+
+    if (!result.success) {
+      const error = result.error.format();
+      ctx.response.body = error;
+    } else {
+      const app = await Apps.insertOne({
+        ...result.data,
+        createdAt: new Date(),
+        events: [],
+        users: [],
+      });
+      ctx.response.body = app;
+    }
   })
   .post("/:appId/create-user/new", async (ctx) => {
-    // create a guest user, add an app, create the app user,
+    /**
+     * create new user in fync api
+     *  */
     try {
       console.log(ctx.params.appId);
       console.log(new ObjectId(ctx.params.appId));
@@ -68,6 +98,7 @@ appsRouter
                 eventCount: 0,
                 lastInteraction: new Date(),
               },
+              friends: [],
               createdAt: new Date(),
             });
 
@@ -94,47 +125,31 @@ appsRouter
       ctx.response.body = { message: "invalid app id", e };
     }
   })
-  .post("/", async (ctx) => {
-    const body = await ctx.request.body({ type: "json" }).value;
-    body._id = new ObjectId(ctx.params.id);
-    console.log(body);
-
-    const result = createAppParser.safeParse(body);
-    console.log(result);
-    // console.log(body instanceof UserSchema);
-
-    if (!result.success) {
-      const error = result.error.format();
-      ctx.response.body = error;
-    } else {
-      const app = await Apps.insertOne({
-        ...result.data,
-        createdAt: new Date(),
-        events: [],
-        users: [],
-      });
-      ctx.response.body = app;
-    }
+  .post("/:appId/create-user/existing", async (ctx) => {
+    // TODO link existing user to app
+    // flow => hmmmmm only for hh
   })
-  .put("/:id", async (ctx) => {
-    const body = await ctx.request.body({ type: "json" }).value;
+  .post("/:appId/create-interaction", async (ctx) => {});
 
-    const result = appParser.partial().safeParse(body);
-    console.log(result);
+appsRouter.put("/:id", async (ctx) => {
+  const body = await ctx.request.body({ type: "json" }).value;
 
-    if (!result.success) {
-      const error = result.error.format();
+  const result = appParser.partial().safeParse(body);
+  console.log(result);
 
-      ctx.response.body = error;
-    } else {
-      const app = await Apps.updateOne(
-        { _id: new ObjectId(ctx.params.id) },
-        { $set: result.data }
-      );
-      ctx.response.body = app;
-    }
-  })
-  .delete("/:id", async (ctx) => {
-    const app = await Apps.deleteOne({ _id: new ObjectId(ctx.params.id) });
+  if (!result.success) {
+    const error = result.error.format();
+
+    ctx.response.body = error;
+  } else {
+    const app = await Apps.updateOne(
+      { _id: new ObjectId(ctx.params.id) },
+      { $set: result.data }
+    );
     ctx.response.body = app;
-  });
+  }
+});
+appsRouter.delete("/:id", async (ctx) => {
+  const app = await Apps.deleteOne({ _id: new ObjectId(ctx.params.id) });
+  ctx.response.body = app;
+});

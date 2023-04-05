@@ -1,7 +1,7 @@
 import { ObjectId } from "mongo";
 import { db } from "../db.ts";
 import { z } from "zod";
-import { FriendParser } from "./friend.model.ts";
+import { friendParser } from "./friend.model.ts";
 
 // export interface UserSchema {
 //   _id: ObjectId;
@@ -17,21 +17,23 @@ import { FriendParser } from "./friend.model.ts";
 
 export const userParser = z.object({
   _id: z.instanceof(ObjectId),
-  googleId: z.string().optional(),
+  provider: z.array(z.enum(["google", "facebook", "email"])).optional(),
 
   username: z.string(),
   name: z.string(),
   avatar: z.string().optional(),
+  age: z.number().optional(),
 
   profilePicture: z.string().optional(),
 
-  friends: z.array(FriendParser),
+  friends: z.array(friendParser),
   email: z.string(),
+  password: z.string().optional(),
   verified: z.boolean(),
   createdAt: z.date(),
 
   phoneNumber: z.string().optional(),
-  birthday: z.string().optional(),
+  birthdate: z.string().optional(),
 
   apps: z.array(z.instanceof(ObjectId)),
   appUsers: z.instanceof(ObjectId).array(),
@@ -47,16 +49,26 @@ export const createUserParser = userParser.omit({
   apps: true,
 });
 
-export const createGuestUser = userParser.omit({
-  _id: true,
-  verified: true,
-  createdAt: true,
-  googleId: true,
-  friends: true,
-  apps: true,
-  appUsers: true,
-  avatar: true,
+export const createEmailUserParser = z.object({
+  username: z.string(),
+  name: z.string(),
+  email: z.string(),
+  password: z.string(),
+  profilePicture: z.string().optional(),
+  avatar: z.string().optional(),
+  birthday: z.string().optional(),
+});
+
+export const createGuestUser = userParser.pick({
+  username: true,
+  name: true,
+  email: true,
+  age: true,
+  phoneNumber: true,
+
   profilePicture: true,
+  avatar: true,
+  birthday: true,
 });
 
 // export const guestUserParser = userParser.omit({});

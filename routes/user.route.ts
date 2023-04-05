@@ -52,3 +52,27 @@ usersRouter
     const user = await Users.deleteOne({ _id: new ObjectId(ctx.params.id) });
     ctx.response.body = user;
   });
+
+usersRouter
+  .get("/friends/:id", async (ctx) => {
+    try {
+      const user = await Users.findOne({ _id: new ObjectId(ctx.params.id) });
+      ctx.response.body = user?.friends || [];
+    } catch (e) {
+      console.log(e);
+      ctx.response.body = { message: "invalid user id" };
+    }
+  })
+  .post("/:id/add-friend", async (ctx) => {
+    try {
+      const body = await ctx.request.body({ type: "json" }).value;
+
+      const user = await Users.findOne({ _id: new ObjectId(ctx.params.id) });
+
+      if (user) {
+        const friend = await Users.findOne({
+          _id: new ObjectId(body.friendId),
+        });
+      }
+    } catch (e) {}
+  });
