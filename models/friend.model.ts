@@ -9,8 +9,6 @@ export const friendParser = z.object({
   adder: z.string(),
   accepter: z.string(),
 
-  status: z.enum(["pending", "accepted", "rejected"]),
-
   friendship: z.number(),
 
   images: z.array(z.string()),

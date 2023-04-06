@@ -27,6 +27,8 @@ export const userParser = z.object({
   profilePicture: z.string().optional(),
 
   friends: z.array(friendParser),
+  friendRequests: z.array(z.instanceof(ObjectId)),
+
   email: z.string(),
   password: z.string().optional(),
   verified: z.boolean(),
