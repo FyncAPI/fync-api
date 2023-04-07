@@ -163,13 +163,18 @@ usersRouter
       const friendship = await Friends.insertOne({
         adder: user._id,
         accepter: friend._id,
+
+        createdAt: new Date(),
+        friendship: 0,
+        images: [],
+        videos: [],
       });
 
       await Users.updateMany(
         { $or: [{ _id: user._id }, { _id: friend._id }] },
         {
           $push: {
-            friends: {},
+            friends: friendship,
           },
         }
       );
