@@ -92,6 +92,7 @@ authRouter.post("/email/register", async (ctx) => {
       appUsers: [],
       friends: [],
       verified: false,
+      friendRequests: [],
 
       createdAt: new Date(),
     });

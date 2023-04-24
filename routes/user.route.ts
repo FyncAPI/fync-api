@@ -7,6 +7,11 @@ import { Friends } from "../models/friend.model.ts";
 
 export const usersRouter = new Router();
 
+usersRouter.use(async (ctx, next) => {
+  console.log(ctx.request.headers);
+  await next();
+  /* Do some cool logging stuff here */
+});
 usersRouter
   .get("/", async (ctx) => {
     const users = await Users.find().toArray();

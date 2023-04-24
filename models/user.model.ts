@@ -18,6 +18,7 @@ import { friendParser } from "./friend.model.ts";
 export const userParser = z.object({
   _id: z.instanceof(ObjectId),
   provider: z.array(z.enum(["google", "facebook", "email"])).optional(),
+  devId: z.instanceof(ObjectId).optional(),
 
   username: z.string(),
   name: z.string(),
@@ -39,16 +40,37 @@ export const userParser = z.object({
 
   apps: z.array(z.instanceof(ObjectId)),
   appUsers: z.instanceof(ObjectId).array(),
+
+  location: z
+    .object({
+      country: z.string(),
+      city: z.string(),
+    })
+    .optional(),
+
+  interests: z.array(z.string()).optional(),
+  hobbies: z.array(z.string()).optional(),
+  bio: z.string().optional(),
 });
 
 export type UserSchema = z.infer<typeof userParser>;
 
-export const createUserParser = userParser.omit({
-  _id: true,
-  verified: true,
-  createdAt: true,
-  friends: true,
-  apps: true,
+// export const createUserParser = userParser.omit({
+//   _id: true,
+//   verified: true,
+//   createdAt: true,
+//   friends: true,
+//   apps: true,
+// });
+
+export const createUserParser = userParser.pick({
+  username: true,
+  name: true,
+  email: true,
+  password: true,
+  birthdate: true,
+  phoneNumber: true,
+  profilePicture: true,
 });
 
 export const createEmailUserParser = z.object({

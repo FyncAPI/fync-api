@@ -4,6 +4,15 @@ import "https://deno.land/std@0.127.0/dotenv/load.ts";
 const envVars = Deno.env.toObject();
 const client = new MongoClient();
 
+// console.log(
+//   JSON.parse(envVars.DB_SERVERS).map((uri: string) => {
+//     return {
+//       host: uri,
+//       port: 27017,
+//     };
+//   })
+// );
+// await client.connect("mongodb://127.0.0.1:27017");
 await client.connect({
   db: envVars.DB_NAME,
   tls: true,
@@ -21,5 +30,6 @@ await client.connect({
     mechanism: "SCRAM-SHA-1",
   },
 });
-
+// console.log(envVars.DB_URL);
+// await client.connect(envVars.DB_URL);
 export const db = client.database(envVars.DB_NAME);
