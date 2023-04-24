@@ -33,3 +33,41 @@ await client.connect({
 // console.log(envVars.DB_URL);
 // await client.connect(envVars.DB_URL);
 export const db = client.database(envVars.DB_NAME);
+
+export const populateById = (col: string, local: string) => [
+  {
+    $lookup: {
+      from: col,
+      localField: local,
+      foreignField: "_id",
+      as: local,
+    },
+  },
+  {
+    $unwind: {
+      path: "$" + local,
+      preserveNullAndEmptyArrays: true,
+    },
+  },
+];
+
+export const populateByIds = (collectionName: string, fieldName: string) => [
+  {
+    $unwind: "$" + fieldName,
+  },
+  {
+    $lookup: {
+      from: collectionName,
+      localField: fieldName,
+      foreignField: "_id",
+      as: fieldName,
+    },
+  },
+  {
+    $group: {
+      _id: "$_id",
+      [fieldName]: { $push: { $arrayElemAt: [`$${fieldName}`, 0] } },
+      // use $arrayElemAt to get the first element of the array returned by the lookup
+    },
+  },
+];

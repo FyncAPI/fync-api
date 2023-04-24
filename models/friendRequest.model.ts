@@ -15,4 +15,4 @@ export const friendRequestParser = z.object({
 export type FriendRequestSchema = z.infer<typeof friendRequestParser>;
 
 export const FriendRequests =
-  db.collection<FriendRequestSchema>("FriendRequests");
+  db.collection<FriendRequestSchema>("friendRequests");

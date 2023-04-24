@@ -7,6 +7,7 @@ import { usersRouter } from "@/routes/user.route.ts";
 import { appsRouter } from "@/routes/app.route.ts";
 import { authRouter } from "@/routes/auth.route.ts";
 import { devRouter } from "./routes/dev.route.ts";
+import { friendsRouter } from "./routes/friend.route.ts";
 
 const app = new Application();
 const router = new Router();
@@ -15,6 +16,7 @@ router.use("/users", usersRouter.routes());
 router.use("/apps", appsRouter.routes());
 router.use("/auth", authRouter.routes());
 router.use("/dev", devRouter.routes());
+router.use("/friend", friendsRouter.routes());
 
 router.get("/", (ctx) => {
   // add a button to login with google

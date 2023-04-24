@@ -5,17 +5,17 @@ import { friendParser } from "./friend.model.ts";
 
 export const devParser = z.object({
   _id: z.instanceof(ObjectId),
-  userId: z.object({
+  user: z.object({
     _id: z.instanceof(ObjectId),
     name: z.string(),
     email: z.string(),
   }),
-  website: z.string(),
+  website: z.string().optional(),
   apps: z.array(z.instanceof(ObjectId)),
-  apiKeys: z.array(z.string()),
+  apiKeys: z.array(z.string()).optional(),
   createdAt: z.date(),
 });
 
 export type DevSchema = z.infer<typeof devParser>;
 
-export const Devs = db.collection<DevSchema>("Devs");
+export const Devs = db.collection<DevSchema>("devs");

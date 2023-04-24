@@ -19,4 +19,4 @@ export const friendParser = z.object({
   createdAt: z.date(),
 });
 
-export const Friends = db.collection<FriendSchema>("Friends");
+export const Friends = db.collection<FriendSchema>("friends");

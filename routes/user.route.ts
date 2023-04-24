@@ -3,7 +3,8 @@ import { createUserParser, userParser, Users } from "../models/user.model.ts";
 import { ObjectId } from "mongo";
 import { z } from "zod";
 import { FriendRequests } from "../models/friendRequest.model.ts";
-import { Friends } from "../models/friend.model.ts";
+import { Friends, FriendSchema } from "../models/friend.model.ts";
+import { populateById, populateByIds } from "../db.ts";
 
 export const usersRouter = new Router();
 
@@ -63,8 +64,39 @@ usersRouter
 usersRouter
   .get("/:id/friends", async (ctx) => {
     try {
-      const user = await Users.findOne({ _id: new ObjectId(ctx.params.id) });
-      ctx.response.body = user?.friends || [];
+      const users = await Users.aggregate([
+        {
+          $match: { _id: new ObjectId(ctx.params.id) },
+        },
+        ...populateByIds("friends", "friends"),
+      ]).toArray();
+      const friends = users[0]?.friends.map(async (fs: FriendSchema) => {
+        const friendId =
+          (fs.accepter as string) === ctx.params.id
+            ? fs.requester
+            : fs.accepter;
+        console.log(friendId, "fried");
+        const friend = await Users.findOne({ _id: new ObjectId(friendId) });
+        return friend;
+      });
+      console.log(friends);
+      ctx.response.body = users[0].friends || [];
+    } catch (e) {
+      console.log(e);
+      ctx.response.body = { message: "invalid user id" };
+    }
+  })
+  .get("/:id/friend-requests", async (ctx) => {
+    try {
+      const users = await Users.aggregate([
+        {
+          $match: { _id: new ObjectId(ctx.params.id) },
+        },
+        ...populateByIds("friendRequests", "friendRequests"),
+      ]).toArray();
+
+      console.log(users[0]);
+      ctx.response.body = users[0].friendRequests;
     } catch (e) {
       console.log(e);
       ctx.response.body = { message: "invalid user id" };
@@ -73,6 +105,7 @@ usersRouter
   .post("/:id/add-friend", async (ctx) => {
     try {
       const body = await ctx.request.body({ type: "json" }).value;
+      console.log(ctx.params.id, body.friendId);
 
       const user = await Users.findOne({ _id: new ObjectId(ctx.params.id) });
 
@@ -129,6 +162,7 @@ usersRouter
   .post("/:id/accept-friend", async (ctx) => {
     try {
       const body = await ctx.request.body({ type: "json" }).value;
+      console.log(body, "bd'n'-'/n/n/n");
 
       const user = await Users.findOne({ _id: new ObjectId(ctx.params.id) });
 
@@ -184,7 +218,7 @@ usersRouter
         }
       );
 
-      ctx.response.body = friendRequest;
+      ctx.response.body = friendship;
     } catch (e) {
       console.log(e);
       ctx.response.body = { message: "invalid user id" };

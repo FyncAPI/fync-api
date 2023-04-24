@@ -1,15 +1,62 @@
 import { Router } from "oak";
+import { ObjectId } from "mongo";
 import * as bcrypt from "bcrypt";
 import {
   createEmailUserParser,
   createUserParser,
   Users,
 } from "@/models/user.model.ts";
+import { Devs } from "../models/dev.model.ts";
 
 export const devRouter = new Router();
 
-devRouter.post("/email/login", async (ctx) => {
-  const body = await ctx.request.body({ type: "json" }).value;
+devRouter.post("/login/:userId", async (ctx) => {
+  const userId = ctx.params.userId;
 
-  const { email, password } = body;
+  const user = await Users.findOne({ _id: new ObjectId(userId) });
+
+  console.log(user, "user at devlogin");
+
+  if (!user) {
+    ctx.response.body = {
+      error: "User not found",
+    };
+    return;
+  }
+
+  if (user.devId) {
+    const dev = await Devs.findOne({ _id: new ObjectId(user.devId) });
+
+    if (!dev) {
+      ctx.response.body = {
+        error: "Dev not found",
+      };
+      return;
+    } else {
+      ctx.response.body = {
+        message: "Dev found",
+        dev: dev,
+      };
+    }
+  } else {
+    const dev = await Devs.insertOne({
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+      },
+      apps: [],
+      createdAt: new Date(),
+    });
+
+    await Users.updateOne(
+      { _id: new ObjectId(userId) },
+      { $set: { devId: dev } }
+    );
+
+    ctx.response.body = {
+      message: "Dev created",
+      dev: dev,
+    };
+  }
 });
