@@ -22,6 +22,26 @@ usersRouter
     const user = await Users.findOne({ _id: new ObjectId(ctx.params.id) });
     ctx.response.body = user;
   })
+  .get("/name/:name", async (ctx) => {
+    if (!ctx.params.name) {
+      ctx.response.body = {
+        error: "No name provided",
+      };
+      return;
+    }
+    const user = await Users.findOne({ name: ctx.params.name });
+    ctx.response.body = user;
+  })
+  .get("/username/:username", async (ctx) => {
+    if (!ctx.params.username) {
+      ctx.response.body = {
+        error: "No username provided",
+      };
+      return;
+    }
+    const user = await Users.findOne({ username: ctx.params.username });
+    ctx.response.body = user;
+  })
   .post("/", async (ctx) => {
     const body = await ctx.request.body({ type: "json" }).value;
 
