@@ -28,6 +28,7 @@ export const createAppParser = appParser.omit({
   createdAt: true,
   users: true,
   events: true,
+  interactions: true,
 });
 
 export const Apps = db.collection<AppSchema>("apps");
