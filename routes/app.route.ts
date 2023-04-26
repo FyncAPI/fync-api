@@ -52,6 +52,7 @@ appsRouter
         createdAt: new Date(),
         events: [],
         users: [],
+        interactions: [],
       });
       ctx.response.body = app;
     }
@@ -71,7 +72,7 @@ appsRouter
         const result = z
           .object({
             user: createGuestUser,
-            appUserId: z.string(),
+            appUserId: z.string().optional(),
           })
           .safeParse(body);
 
@@ -85,6 +86,7 @@ appsRouter
             apps: [appId],
             appUsers: [],
             friends: [],
+            friendRequests: [],
             verified: false,
           });
 
