@@ -1,9 +1,8 @@
 import { Router } from "oak";
-import { appParser, Apps, createAppParser } from "../models/app.model.ts";
-import { z } from "zod";
+import { appParser, Apps, createAppParser } from "@/models/app.model.ts";
 import { ObjectId } from "mongo";
-import { createGuestUser, userParser, Users } from "../models/user.model.ts";
-import { appUserParser, AppUsers } from "../models/appUser.model.ts";
+import { createGuestUserParser, Users } from "@/models/user.model.ts";
+import { AppUsers } from "@/models/appUser.model.ts";
 
 export const appsRouter = new Router();
 
@@ -61,27 +60,29 @@ appsRouter
     /**
      * create new user in fync api
      *  */
+    if (!ctx.params.appId) {
+      ctx.response.body = { message: "No app id provided" };
+      return;
+    }
     try {
       console.log(ctx.params.appId);
-      console.log(new ObjectId(ctx.params.appId));
       const appId = new ObjectId(ctx.params.appId);
       const app = await Apps.findOne({ _id: appId });
 
       if (app) {
+        console.log(app);
         const body = await ctx.request.body({ type: "json" }).value;
-        const result = z
-          .object({
-            user: createGuestUser,
-            appUserId: z.string().optional(),
-          })
-          .safeParse(body);
+        console.log(body);
+        console.log(createGuestUserParser.parse(body.user));
+        const result = createGuestUserParser.safeParse(body.user);
 
+        console.log(result);
         if (!result.success) {
           const error = result.error.format();
           ctx.response.body = error;
         } else {
           const userId = await Users.insertOne({
-            ...result.data.user,
+            ...result.data,
             createdAt: new Date(),
             apps: [appId],
             appUsers: [],
@@ -90,11 +91,13 @@ appsRouter
             verified: false,
           });
 
+          console.log(userId, "userId");
+
           if (userId) {
             const newAppUserId = await AppUsers.insertOne({
               app: appId,
               fyncId: userId,
-              appUserId: result.data.appUserId,
+              appUserId: body.appUserId || "",
               appInteraction: {
                 friendshipCount: 0,
                 eventCount: 0,

@@ -80,10 +80,10 @@ export const createEmailUserParser = z.object({
   password: z.string(),
   profilePicture: z.string().optional(),
   avatar: z.string().optional(),
-  birthday: z.string().optional(),
+  birthdate: z.string().optional(),
 });
 
-export const createGuestUser = userParser.pick({
+export const createGuestUserParser = userParser.pick({
   username: true,
   name: true,
   email: true,
@@ -92,7 +92,7 @@ export const createGuestUser = userParser.pick({
 
   profilePicture: true,
   avatar: true,
-  birthday: true,
+  birthdate: true,
 });
 
 // export const guestUserParser = userParser.omit({});
