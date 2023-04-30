@@ -90,15 +90,17 @@ usersRouter
         },
         ...populateByIds("friends", "friends"),
       ]).toArray();
-      const friends = users[0]?.friends.map(async (fs: FriendSchema) => {
-        const friendId =
-          (fs.accepter as string) === ctx.params.id
-            ? fs.requester
-            : fs.accepter;
-        console.log(friendId, "fried");
-        const friend = await Users.findOne({ _id: new ObjectId(friendId) });
-        return friend;
-      });
+      const friends = (users[0]?.friends as FriendSchema[]).map(
+        async (fs: FriendSchema) => {
+          const friendId =
+            (fs.accepter as string) === ctx.params.id
+              ? fs.requester
+              : fs.accepter;
+          console.log(friendId, "fried");
+          const friend = await Users.findOne({ _id: new ObjectId(friendId) });
+          return friend;
+        }
+      );
       console.log(friends);
       ctx.response.body = users[0].friends || [];
     } catch (e) {
@@ -239,6 +241,72 @@ usersRouter
       );
 
       ctx.response.body = friendship;
+    } catch (e) {
+      console.log(e);
+      ctx.response.body = { message: "invalid user id" };
+    }
+  })
+  .post("/:id/reject-friend", async (ctx) => {
+    try {
+      const body = await ctx.request.body({ type: "json" }).value;
+      console.log(body, "bd'n'-'/n/n/n");
+
+      const userId = ctx.params.id;
+      const friendRequestId = body.friendRequestId;
+
+      //
+    } catch (e) {
+      console.log(e);
+      ctx.response.body = { message: "invalid user id" };
+    }
+  })
+  .post("/:id/remove-friend", async (ctx) => {
+    try {
+      const id = ctx.params.id;
+      const body = await ctx.request.body({ type: "json" }).value;
+
+      const friendId = body.friendId;
+
+      const friendship = await Friends.findOne({
+        $or: [
+          { adder: new ObjectId(id), accepter: new ObjectId(friendId) },
+          { adder: new ObjectId(friendId), accepter: new ObjectId(id) },
+        ],
+      });
+
+      if (!friendship || friendship.removed) {
+        ctx.response.body = { message: "friendship does not exist" };
+        return;
+      }
+
+      const updatedFriendship = await Friends.updateOne(
+        {
+          $or: [
+            { adder: new ObjectId(id), accepter: new ObjectId(friendId) },
+            { adder: new ObjectId(friendId), accepter: new ObjectId(id) },
+          ],
+        },
+        { $set: { removed: true } }
+      );
+
+      console.log(updatedFriendship, "updatedFriendship");
+      console.log(friendship, "friendship", id, friendId);
+
+      if (!updatedFriendship) {
+        ctx.response.body = { message: "error removing friend" };
+        return;
+      }
+
+      await Users.updateMany(
+        { $or: [{ _id: new ObjectId(id) }, { _id: new ObjectId(friendId) }] },
+        {
+          $pull: {
+            friends: { _id: friendship._id },
+          },
+        }
+      );
+
+      ctx.response.body = updatedFriendship;
     } catch (e) {
       console.log(e);
       ctx.response.body = { message: "invalid user id" };

@@ -8,6 +8,7 @@ export const friendParser = z.object({
   _id: z.instanceof(ObjectId),
   adder: z.instanceof(ObjectId),
   accepter: z.instanceof(ObjectId),
+  removed: z.boolean().optional(),
 
   friendship: z.number(),
 
