@@ -7,7 +7,7 @@ export const friendRequestParser = z.object({
   adder: z.instanceof(ObjectId),
   accepter: z.instanceof(ObjectId),
 
-  status: z.enum(["pending", "accepted", "declined, canceled"]),
+  status: z.enum(["pending", "accepted", "declined", "canceled"]),
 
   createdAt: z.date(),
 });

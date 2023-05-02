@@ -246,13 +246,31 @@ usersRouter
       ctx.response.body = { message: "invalid user id" };
     }
   })
-  .post("/:id/reject-friend", async (ctx) => {
+  .post("/:id/decline-friend", async (ctx) => {
     try {
       const body = await ctx.request.body({ type: "json" }).value;
       console.log(body, "bd'n'-'/n/n/n");
 
       const userId = ctx.params.id;
-      const friendRequestId = body.friendRequestId;
+      const friendId = body.friendId;
+
+      const friendRequest = await FriendRequests.findOne({
+        adder: new ObjectId(friendId),
+        accepter: new ObjectId(userId),
+      });
+
+      if (!friendRequest) {
+        ctx.response.body = { message: "friend request does not exist" };
+        return;
+      }
+      if (friendRequest.status !== "pending") {
+        ctx.response.body = { message: "friend request is not pending" };
+        return;
+      }
+      await FriendRequests.updateOne(
+        { _id: friendRequest._id },
+        { $set: { status: "declined" } }
+      );
 
       //
     } catch (e) {
