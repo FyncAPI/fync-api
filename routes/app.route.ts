@@ -87,7 +87,7 @@ appsRouter
             apps: [appId],
             appUsers: [],
             friends: [],
-            friendRequests: [],
+            // friendRequests: [],
             verified: false,
           });
 

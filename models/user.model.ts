@@ -1,7 +1,7 @@
 import { ObjectId } from "mongo";
 import { db } from "../db.ts";
 import { z } from "zod";
-import { friendParser } from "./friend.model.ts";
+import { FriendSchema, friendParser } from "./friend.model.ts";
 
 // export interface UserSchema {
 //   _id: ObjectId;
@@ -27,8 +27,12 @@ export const userParser = z.object({
 
   profilePicture: z.string().optional(),
 
-  friends: z.array(friendParser),
-  friendRequests: z.array(z.instanceof(ObjectId)),
+  friends: z.array(friendParser.or(z.instanceof(ObjectId))),
+
+  inwardFriendRequests: z.array(z.instanceof(ObjectId)).optional(),
+  outwardFriendRequests: z.array(z.instanceof(ObjectId)).optional(),
+  declinedFriendRequests: z.array(z.instanceof(ObjectId)).optional(),
+  canceledFriendRequests: z.array(z.instanceof(ObjectId)).optional(),
 
   email: z.string(),
   password: z.string().optional(),

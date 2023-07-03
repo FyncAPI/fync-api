@@ -60,3 +60,27 @@ devRouter.post("/login/:userId", async (ctx) => {
     };
   }
 });
+
+devRouter.post("/createApp", async (ctx) => {
+  // get auth header from request
+  const authHeader = ctx.request.headers.get("Authorization");
+
+  // if no auth header, return error
+  if (!authHeader) {
+    ctx.response.body = {
+      error: "No auth header",
+    };
+  }
+
+  // get auth header value
+  const token = authHeader.split(" ")[1];
+
+  // if no token, return error
+  if (!token) {
+    ctx.response.body = {
+      error: "No token",
+    };
+  }
+
+  // get user from token
+});
