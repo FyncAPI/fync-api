@@ -30,11 +30,9 @@ router.get("/", (ctx) => {
       <title>Auth</title>
       </head>
       <body>
-        
-        <h1>Welcome to Fync API</h1>
+                <h1>Welcome to Fync API</h1>
         </body>
         </html>
-          
         `;
 });
 
