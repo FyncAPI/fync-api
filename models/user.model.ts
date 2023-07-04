@@ -77,6 +77,8 @@ export const createUserParser = userParser.pick({
   profilePicture: true,
 });
 
+export type CreateUserSchema = z.infer<typeof createUserParser>;
+
 export const createEmailUserParser = z.object({
   username: z.string(),
   name: z.string(),
