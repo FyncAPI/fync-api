@@ -60,6 +60,7 @@ usersRouter
     } else {
       const user = await Users.insertOne({
         ...body,
+        friends: [],
         verified: false,
         createdAt: new Date(),
       });
