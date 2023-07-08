@@ -145,8 +145,8 @@ usersRouter
       }
 
       const friendRequest = await FriendRequests.findOne({
-        adder: user._id,
-        accepter: friend._id,
+        adder: user.username,
+        accepter: friend.username,
       });
 
       if (friendRequest) {
@@ -155,8 +155,8 @@ usersRouter
       }
 
       const newFriendRequest = await FriendRequests.insertOne({
-        adder: user._id,
-        accepter: friend._id,
+        adder: user.username,
+        accepter: friend.username,
         status: "pending",
         createdAt: new Date(),
       });
@@ -202,8 +202,8 @@ usersRouter
       }
 
       const friendRequest = await FriendRequests.findOne({
-        adder: friend._id,
-        accepter: user._id,
+        adder: friend.username,
+        accepter: user.username,
       });
 
       if (!friendRequest) {
@@ -222,8 +222,8 @@ usersRouter
       );
 
       const friendship = await Friends.insertOne({
-        adder: user._id,
-        accepter: friend._id,
+        adder: user.username,
+        accepter: friend.username,
 
         createdAt: new Date(),
         friendship: 0,

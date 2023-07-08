@@ -4,8 +4,8 @@ import { db } from "../db.ts";
 
 export const friendRequestParser = z.object({
   _id: z.instanceof(ObjectId),
-  adder: z.instanceof(ObjectId),
-  accepter: z.instanceof(ObjectId),
+  adder: z.string(),
+  accepter: z.string(),
 
   status: z.enum(["pending", "accepted", "declined", "canceled"]),
 

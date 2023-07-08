@@ -6,8 +6,8 @@ export type FriendSchema = z.infer<typeof friendParser>;
 
 export const friendParser = z.object({
   _id: z.instanceof(ObjectId),
-  adder: z.instanceof(ObjectId),
-  accepter: z.instanceof(ObjectId),
+  adder: z.string(),
+  accepter: z.string(),
   removed: z.boolean().optional(),
 
   friendship: z.number(),
