@@ -112,7 +112,7 @@ Deno.test("user", async (t) => {
       await usersRouter.routes()(ctx, next);
       assertEquals(ctx.response.status, 200);
       assertEquals(ObjectId.isValid(ctx.response.body as string), true);
-      createdUserId = ctx.response.body as string;
+      createdUser2Id = ctx.response.body as string;
     },
   });
 
@@ -132,6 +132,8 @@ Deno.test("user", async (t) => {
         throw new Error("no response body");
       }
 
+      console.log(ctx.response, ctx.response.body);
+
       assertEquals(ctx.response.status, 200);
       console.log(ctx.response);
       const responseBody = ctx.response.body as Object;
@@ -140,8 +142,48 @@ Deno.test("user", async (t) => {
         message: "friend request sent",
       });
 
-      const user1 = await usersCol.findOne({ _id: createdUserId });
-      const user2 = await usersCol.findOne({ _id: createdUser2Id });
+      const user1 = await userCol.findOne({ _id: createdUserId });
+      const user2 = await userCol.findOne({ _id: createdUser2Id });
+
+      assertEquals(user1?.outwardFriendRequests, [
+        new ObjectId(createdUser2Id),
+      ]);
+      assertEquals(user2?.inwardFriendRequests, [new ObjectId(createdUserId)]);
+      console.log(user1, user2);
+    },
+  });
+
+  await t.step({
+    name: "accept friend",
+    async fn() {
+      const body = JSON.stringify({
+        friendId: createdUserId,
+      });
+      const ctx = createPostCtx(body, `/${createdUser2Id}/accept-friend`);
+
+      const next = testing.createMockNext();
+
+      await usersRouter.routes()(ctx, next);
+
+      if (!ctx.response.body) {
+        throw new Error("no response body");
+      }
+
+      console.log(ctx.response, ctx.response.body);
+
+      assertEquals(ctx.response.status, 200);
+      console.log(ctx.response);
+      const responseBody = ctx.response.body as Object;
+      assertObjectMatch(responseBody, {
+        success: true,
+        message: "friend request accepted",
+      });
+
+      const user1 = await userCol.findOne({ _id: createdUserId });
+      const user2 = await userCol.findOne({ _id: createdUser2Id });
+
+      assertEquals(user1?.friends, [new ObjectId(createdUser2Id)]);
+      assertEquals(user2?.friends, [new ObjectId(createdUserId)]);
       console.log(user1, user2);
     },
   });
