@@ -84,18 +84,18 @@ usersRouter
 usersRouter
   .get("/:id/friends", async (ctx) => {
     try {
+      if (!ctx.params.id) throw new Error("invalid user id");
       const users = await Users.aggregate([
         {
           $match: { _id: new ObjectId(ctx.params.id) },
         },
         ...populateByIds("friends", "friends"),
       ]).toArray();
+
       const friends = (users[0]?.friends as FriendSchema[]).map(
         async (fs: FriendSchema) => {
           const friendId =
-            (fs.accepter as string) === ctx.params.id
-              ? fs.requester
-              : fs.accepter;
+            (fs.accepter as string) === ctx.params.id ? fs.adder : fs.accepter;
           console.log(friendId, "fried");
           const friend = await Users.findOne({ _id: new ObjectId(friendId) });
           return friend;
@@ -105,6 +105,7 @@ usersRouter
       ctx.response.body = users[0].friends || [];
     } catch (e) {
       console.log(e);
+      ctx.response.status = 400;
       ctx.response.body = { message: "invalid user id" };
     }
   })
