@@ -9,10 +9,10 @@ export function validateAddFriendRequest(
     return { valid: false, message: "Invalid user ID" };
   }
 
-  if (!ObjectId.isValid(friendId)) {
+  const friendIdObj = new ObjectId(friendId);
+  if (!ObjectId.isValid(friendIdObj)) {
     return { valid: false, message: "Invalid friend ID" };
   }
-  const friendIdObj = new ObjectId(friendId);
 
   if (user._id === new ObjectId(friendId)) {
     return {
