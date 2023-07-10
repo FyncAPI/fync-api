@@ -2,7 +2,7 @@ import { Router } from "oak";
 import { createUserParser, userParser, Users } from "../models/user.model.ts";
 import { ObjectId } from "mongo";
 import { z } from "zod";
-import { friendParser, Friends } from "../models/friend.model.ts";
+import { friendshipParser, Friends } from "../models/friendship.model.ts";
 
 export const friendsRouter = new Router();
 

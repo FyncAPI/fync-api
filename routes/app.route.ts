@@ -59,7 +59,8 @@ appsRouter
   .post("/:appId/create-user/new", async (ctx) => {
     /**
      * create new user in fync api
-     *  */
+     *
+     **/
     if (!ctx.params.appId) {
       ctx.response.body = { message: "No app id provided" };
       return;
