@@ -1,7 +1,6 @@
 import { ObjectId } from "mongo";
 import { db } from "../db.ts";
 import { z } from "zod";
-import { friendParser } from "./friend.model.ts";
 
 export const devParser = z.object({
   _id: z.instanceof(ObjectId),

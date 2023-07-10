@@ -8,7 +8,7 @@ import {
 import { ObjectId } from "mongo";
 import { z } from "zod";
 // import { FriendRequests } from "../models/friendRequest.model.ts";
-import { Friends, FriendSchema } from "../models/friend.model.ts";
+import { Friends, FriendshipSchema } from "../models/friendship.model.ts";
 import { populateById, populateByIds } from "../db.ts";
 import { validateAddFriendRequest } from "../utils/friend.ts";
 

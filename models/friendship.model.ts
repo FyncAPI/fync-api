@@ -2,9 +2,9 @@ import { ObjectId } from "mongo";
 import { db } from "@/db.ts";
 import { z } from "zod";
 
-export type FriendSchema = z.infer<typeof friendParser>;
+export type FriendshipSchema = z.infer<typeof friendshipParser>;
 
-export const friendParser = z.object({
+export const friendshipParser = z.object({
   _id: z.instanceof(ObjectId),
   adder: z.string(),
   accepter: z.string(),
@@ -20,4 +20,4 @@ export const friendParser = z.object({
   createdAt: z.date(),
 });
 
-export const Friends = db.collection<FriendSchema>("friends");
+export const Friends = db.collection<FriendshipSchema>("friendships");
