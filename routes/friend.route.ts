@@ -2,12 +2,12 @@ import { Router } from "oak";
 import { createUserParser, userParser, Users } from "../models/user.model.ts";
 import { ObjectId } from "mongo";
 import { z } from "zod";
-import { friendshipParser, Friends } from "../models/friendship.model.ts";
+import { friendshipParser, Friendships } from "../models/friendship.model.ts";
 
 export const friendsRouter = new Router();
 
 friendsRouter.get("/", async (ctx) => {
-  const friends = await Friends.find().toArray();
+  const friends = await Friendships.find().toArray();
   ctx.response.body = friends || [];
 });
 
@@ -23,7 +23,7 @@ friendsRouter.put("/:id", async (ctx) => {
     };
     ctx.response.status = 400;
   } else {
-    const res = await Friends.updateOne(
+    const res = await Friendships.updateOne(
       { _id: new ObjectId(ctx.params.id) },
       { $set: body }
     );
@@ -32,7 +32,7 @@ friendsRouter.put("/:id", async (ctx) => {
 });
 
 friendsRouter.post("/addfriendship/:id", async (ctx) => {
-  const res = await Friends.updateOne(
+  const res = await Friendships.updateOne(
     { _id: new ObjectId(ctx.params.id) },
     { $inc: { friendship: 1 } }
   );

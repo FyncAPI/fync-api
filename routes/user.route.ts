@@ -8,9 +8,10 @@ import {
 import { ObjectId } from "mongo";
 import { z } from "zod";
 // import { FriendRequests } from "../models/friendRequest.model.ts";
-import { Friends, FriendshipSchema } from "../models/friendship.model.ts";
+import { Friendships, FriendshipSchema } from "../models/friendship.model.ts";
 import { populateById, populateByIds } from "../db.ts";
 import { validateAddFriendRequest } from "../utils/friend.ts";
+import { queryTranslator } from "../utils/user.ts";
 
 export const usersRouter = new Router();
 
@@ -19,13 +20,24 @@ usersRouter.use(async (ctx, next) => {
   await next();
   /* Do some cool logging stuff here */
 });
+
 usersRouter
   .get("/", async (ctx) => {
     const users = await Users.find().toArray();
     ctx.response.body = users || [];
   })
   .get("/:id", async (ctx) => {
-    const user = await Users.findOne({ _id: new ObjectId(ctx.params.id) });
+    const stages = queryTranslator(ctx.request.url.searchParams);
+    const user = await Users.aggregate([
+      {
+        $match: {
+          _id: new ObjectId(ctx.params.id),
+        },
+      },
+      ...stages,
+    ]).toArray();
+
+    // const user = await Users.findOne({ _id: new ObjectId(ctx.params.id) });
     ctx.response.body = user;
   })
   .get("/name/:name", async (ctx) => {
@@ -95,38 +107,48 @@ usersRouter
         {
           $match: { _id: new ObjectId(ctx.params.id) },
         },
-        ...populateByIds("friends", "friends"),
-        // ...populateById("users", "friends.accepter"),
+        {
+          $unwind: "$friends",
+        },
         {
           $lookup: {
-            from: "users",
-            localField: "friends.accepter",
+            from: "friendships",
+            localField: "friends.friendship",
             foreignField: "_id",
-            as: "friends.accepter",
+            as: "friends.friendship",
           },
+        },
+        {
+          $unwind: "$friends.friendship",
         },
         {
           $lookup: {
             from: "users",
-            localField: "friends.adder",
+            localField: "friends.user",
             foreignField: "_id",
-            as: "friends.adder",
+            as: "friends.user",
+          },
+        },
+        {
+          $unwind: "$friends.user",
+        },
+        {
+          $group: {
+            _id: "$_id",
+            // Include any other fields from the users document you need in your final output
+            friends: {
+              $push: "$friends",
+            },
           },
         },
       ]).toArray();
+
       console.log(users[0]);
 
-      const user = userParser.parse(users[0]);
-      console.log(user, "user with friends");
-      // const friends = user.friends.map((friend) => {
-      //   return friendObjects.find(
-      //     (friendObject) =>
-      //       friendObject._id.equals(friend.accepter) ||
-      //       friendObject._id.equals(friend.requester)
-      //   );
-      // });
-
-      ctx.response.body = []; //|| friends || [];
+      ctx.response.body = {
+        success: true,
+        data: (users[0] as UserSchema).friends,
+      };
     } catch (e) {
       console.log(e);
       ctx.response.body = { message: "invalid user id" };
@@ -293,15 +315,36 @@ usersRouter
     }
   })
   .post("/:id/accept-friend", async (ctx) => {
+    /**
+     * 1. check if the user exists
+     * 2. create friendship document
+     * 3. remove the friend from the user's outwardFriendRequests
+     * 4. add the friend to the user's friends
+     * 5. remove the user from the friend's inwardFriendRequests
+     * 6. add the user to the friend's friends
+     */
     try {
       const body = await ctx.request.body({ type: "json" }).value;
+      const friendId = new ObjectId(body.friendId);
 
       const user = await Users.findOne({ _id: new ObjectId(ctx.params.id) });
+      console.log(user, "user accept friend");
 
       if (!user) {
         ctx.response.body = { message: "invalid user id" };
         return;
       }
+
+      if (!user.inwardFriendRequests?.find((id) => id.equals(friendId))) {
+        console.log(
+          user.inwardFriendRequests?.find((id) => id.equals(friendId))
+        );
+        ctx.response.body = {
+          message: "user has no friend request from this friend",
+        };
+        return;
+      }
+
       const friend = await Users.findOne({
         _id: new ObjectId(body.friendId),
       });
@@ -311,72 +354,99 @@ usersRouter
         return;
       }
 
-      // const friendRequest = await FriendRequests.findOne({
-      //   adder: friend._id,
-      //   accepter: user._id,
-      // });
+      if (!friend.outwardFriendRequests?.find((id) => id.equals(user._id))) {
+        ctx.response.body = { message: "invalid friend id" };
+        return;
+      }
 
-      // if (!friendRequest) {
-      //   ctx.response.body = { message: "friend request does not exist" };
-      //   return;
-      // }
+      // Create friendship document
+      const friendship = await Friendships.insertOne({
+        accepter: user._id,
+        adder: friend._id,
+        friendship: 0,
+        images: [],
+        videos: [],
 
-      // if (friendRequest.status !== "pending") {
-      //   ctx.response.body = { message: "friend request is not pending" };
-      //   return;
-      // }
+        createdAt: new Date(),
+      });
 
-      // await FriendRequests.updateOne(
-      //   { _id: friendRequest._id },
-      //   { $set: { status: "accepted" } }
-      // );
+      // Update user and friend documents
+      await Users.updateOne(
+        { _id: user._id },
+        {
+          $pull: { outwardFriendRequests: friend._id },
+          $addToSet: {
+            friends: {
+              user: friend._id,
+              friendship: friendship,
+            },
+          },
+        }
+      );
 
-      // const friendship = await Friends.insertOne({
-      //   adder: user._id,
-      //   accepter: friend._id,
+      await Users.updateOne(
+        { _id: friend._id },
+        {
+          $pull: { inwardFriendRequests: user._id },
+          $addToSet: { friends: { user: user._id, friendship: friendship } },
+        }
+      );
 
-      //   createdAt: new Date(),
-      //   friendship: 0,
-      //   images: [],
-      //   videos: [],
-      // });
-
-      // await Users.updateMany(
-      //   { $or: [{ _id: user._id }, { _id: friend._id }] },
-      //   {
-      //     $push: {
-      //       friends: friendship,
-      //     },
-      //   }
-      // );
-
-      ctx.response.body = "wtf";
+      ctx.response.body = {
+        success: true,
+        message: "friend request accepted",
+        data: {
+          friendship: friendship,
+        },
+      };
     } catch (e) {
       console.log(e);
-      ctx.response.body = { message: "invalid user id" };
+      ctx.response.status = 400;
+      ctx.response.body = { message: "invalid user id", error: e };
     }
   })
   .post("/:id/decline-friend", async (ctx) => {
+    /**
+     * 1. check if the user exists
+     * 2. remove the friend from the user's inwardFriendRequests
+     */
     try {
       const body = await ctx.request.body({ type: "json" }).value;
-      console.log(body, "bd'n'-'/n/n/n");
 
-      const userId = ctx.params.id;
-      const friendId = body.friendId;
+      const user = await Users.findOne({ _id: new ObjectId(ctx.params.id) });
 
-      // check if the user exists
-
-      const user = await Users.findOne({ _id: new ObjectId(userId) });
       if (!user) {
         ctx.response.body = { message: "invalid user id" };
         return;
       }
 
-      // check if the friend exists
-      if (!user.inwardFriendRequests?.includes(friendId)) {
+      const friend = await Users.findOne({
+        _id: new ObjectId(body.friendId),
+      });
+
+      if (!friend) {
         ctx.response.body = { message: "invalid friend id" };
         return;
       }
+
+      // Remove friend from user's inwardFriendRequests
+      await Users.updateOne(
+        { _id: user._id },
+        { $pull: { inwardFriendRequests: friend._id } }
+      );
+
+      await Users.updateOne(
+        { _id: friend._id },
+        {
+          $pull: { outwardFriendRequests: user._id },
+          $addToSet: { declinedFriendRequests: user._id },
+        }
+      );
+
+      ctx.response.body = {
+        success: true,
+        message: "friend request declined",
+      };
     } catch (e) {
       console.log(e);
       ctx.response.body = { message: "invalid user id" };
@@ -389,7 +459,7 @@ usersRouter
 
       const friendId = body.friendId;
 
-      const friendship = await Friends.findOne({
+      const friendship = await Friendships.findOne({
         $or: [
           { adder: new ObjectId(id), accepter: new ObjectId(friendId) },
           { adder: new ObjectId(friendId), accepter: new ObjectId(id) },
@@ -401,7 +471,7 @@ usersRouter
         return;
       }
 
-      const updatedFriendship = await Friends.updateOne(
+      const updatedFriendship = await Friendships.updateOne(
         {
           $or: [
             { adder: new ObjectId(id), accepter: new ObjectId(friendId) },

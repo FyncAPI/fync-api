@@ -1,11 +1,17 @@
-import { assertEquals, assertObjectMatch } from "std/testing/asserts.ts";
+import {
+  assert,
+  assertAlmostEquals,
+  assertEquals,
+  assertObjectMatch,
+} from "std/testing/asserts.ts";
 import { BodyFormData, BodyJson, testing } from "oak";
 import { usersRouter } from "../routes/user.route.ts";
-import { CreateUserSchema } from "../models/user.model.ts";
+import { CreateUserSchema, UserSchema } from "../models/user.model.ts";
 import { Request } from "oak/request.ts";
 import { ServerRequestBody } from "oak/types.d.ts";
 import { MongoClient, ObjectId } from "mongo";
 import { db } from "../db.ts";
+import { FriendshipSchema } from "../models/friendship.model.ts";
 
 function createPostCtx(body: string, url: string) {
   const ctx = testing.createMockContext();
@@ -33,6 +39,14 @@ function createPostCtx(body: string, url: string) {
   return ctx;
 }
 
+function createGetCtx(url: string) {
+  const ctx = testing.createMockContext({
+    path: url,
+    method: "GET",
+  });
+  return ctx;
+}
+
 Deno.test({
   name: "list users",
   async fn() {
@@ -44,7 +58,6 @@ Deno.test({
     const next = testing.createMockNext();
 
     await usersRouter.routes()(ctx, next);
-    console.log(ctx.response);
     assertEquals(ctx.response.status, 200);
     const body = ctx.response.body;
   },
@@ -117,6 +130,21 @@ Deno.test("user", async (t) => {
   });
 
   await t.step({
+    name: "get users",
+    async fn() {
+      const ctx = testing.createMockContext({
+        path: "/",
+        method: "GET",
+      });
+
+      const next = testing.createMockNext();
+      await usersRouter.routes()(ctx, next);
+      assertEquals(ctx.response.status, 200);
+      const body = ctx.response.body;
+    },
+  });
+
+  await t.step({
     name: "add friend",
     async fn() {
       const body = JSON.stringify({
@@ -132,10 +160,7 @@ Deno.test("user", async (t) => {
         throw new Error("no response body");
       }
 
-      console.log(ctx.response, ctx.response.body);
-
       assertEquals(ctx.response.status, 200);
-      console.log(ctx.response);
       const responseBody = ctx.response.body as Object;
       assertObjectMatch(responseBody, {
         success: true,
@@ -144,15 +169,83 @@ Deno.test("user", async (t) => {
 
       const user1 = await userCol.findOne({ _id: createdUserId });
       const user2 = await userCol.findOne({ _id: createdUser2Id });
+      console.log(user1, user2, "add friend");
 
       assertEquals(user1?.outwardFriendRequests, [
         new ObjectId(createdUser2Id),
       ]);
       assertEquals(user2?.inwardFriendRequests, [new ObjectId(createdUserId)]);
-      console.log(user1, user2);
     },
   });
+  // await t.step({
+  //   name: "decline friend",
+  //   async fn() {
+  //     const body = JSON.stringify({
+  //       friendId: createdUserId,
+  //     });
+  //     const ctx = createPostCtx(body, `/${createdUser2Id}/decline-friend`);
 
+  //     const next = testing.createMockNext();
+
+  //     await usersRouter.routes()(ctx, next);
+
+  //     if (!ctx.response.body) {
+  //       throw new Error("no response body");
+  //     }
+
+  //     assertEquals(ctx.response.status, 200);
+  //     const responseBody = ctx.response.body as Object;
+  //     interface DeclineFriendResponse {
+  //       success: boolean;
+  //       message: string;
+  //     }
+
+  //     assertObjectMatch(responseBody, {
+  //       success: true,
+  //       message: "friend request declined",
+  //     });
+
+  //     const user1 = await userCol.findOne({ _id: createdUserId });
+  //     const user2 = await userCol.findOne({ _id: createdUser2Id });
+
+  //     assert(
+  //       !user2?.inwardFriendRequests.includes(new ObjectId(createdUserId)),
+  //       "User2 should not have User1 in inwardFriendRequests"
+  //     );
+  //   },
+  // });
+  // await t.step({
+  //   name: "add friend again",
+  //   async fn() {
+  //     const body = JSON.stringify({
+  //       friendId: createdUser2Id,
+  //     });
+  //     const ctx = createPostCtx(body, `/${createdUserId}/add-friend`);
+
+  //     const next = testing.createMockNext();
+
+  //     await usersRouter.routes()(ctx, next);
+
+  //     if (!ctx.response.body) {
+  //       throw new Error("no response body");
+  //     }
+
+  //     assertEquals(ctx.response.status, 200);
+  //     const responseBody = ctx.response.body as Object;
+  //     assertObjectMatch(responseBody, {
+  //       success: true,
+  //       message: "friend request sent",
+  //     });
+
+  //     const user1 = await userCol.findOne({ _id: createdUserId });
+  //     const user2 = await userCol.findOne({ _id: createdUser2Id });
+
+  //     assertEquals(user1?.outwardFriendRequests, [
+  //       new ObjectId(createdUser2Id),
+  //     ]);
+  //     assertEquals(user2?.inwardFriendRequests, [new ObjectId(createdUserId)]);
+  //   },
+  // });
   await t.step({
     name: "accept friend",
     async fn() {
@@ -168,23 +261,94 @@ Deno.test("user", async (t) => {
       if (!ctx.response.body) {
         throw new Error("no response body");
       }
-
-      console.log(ctx.response, ctx.response.body);
+      console.log(ctx.response.body);
 
       assertEquals(ctx.response.status, 200);
-      console.log(ctx.response);
       const responseBody = ctx.response.body as Object;
+      interface AcceptFriendResponse {
+        success: boolean;
+        message: string;
+        data: {
+          friendship: string;
+        };
+      }
+      const friendshipId = (responseBody as AcceptFriendResponse).data
+        ?.friendship;
       assertObjectMatch(responseBody, {
         success: true,
         message: "friend request accepted",
+        data: {
+          friendship: new ObjectId(friendshipId),
+        },
       });
 
       const user1 = await userCol.findOne({ _id: createdUserId });
       const user2 = await userCol.findOne({ _id: createdUser2Id });
 
-      assertEquals(user1?.friends, [new ObjectId(createdUser2Id)]);
-      assertEquals(user2?.friends, [new ObjectId(createdUserId)]);
-      console.log(user1, user2);
+      assertEquals(user1?.friends, [
+        {
+          user: new ObjectId(createdUser2Id),
+          friendship: new ObjectId(friendshipId),
+        },
+      ]);
+      console.log(user2?.friends, [
+        {
+          user: new ObjectId(createdUserId),
+          friendship: new ObjectId(friendshipId),
+        },
+      ]);
+      assertEquals(user2?.friends, [
+        {
+          user: new ObjectId(createdUserId),
+          friendship: new ObjectId(friendshipId),
+        },
+      ]);
+    },
+  });
+
+  await t.step({
+    name: "get friends",
+    async fn() {
+      const ctx = createGetCtx(`/${createdUserId}/friends`);
+
+      const next = testing.createMockNext();
+
+      await usersRouter.routes()(ctx, next);
+
+      if (!ctx.response.body) {
+        throw new Error("no response body");
+      }
+
+      console.log(ctx.response, ctx.response.body);
+
+      assertEquals(ctx.response.status, 200);
+      const responseBody = ctx.response.body as Object;
+      type Friend = {
+        user: UserSchema;
+        friendship: FriendshipSchema;
+      };
+
+      interface GetFriendsResponse {
+        success: boolean;
+        data: Friend[];
+      }
+
+      const response = responseBody as GetFriendsResponse;
+
+      assert(response.success, "Request should be successful");
+      assert(Array.isArray(response.data), "Friends should be an array");
+
+      // Check that the returned friends are as expected.
+      // This will depend on how you have set up your test data.
+      // Here's an example where we check that the friend's ids are as expected:
+      for (const friend of response.data) {
+        assert(
+          friend.user._id.equals(createdUser2Id),
+          "Returned friend ids should match created user ids"
+        );
+      }
+
+      console.log(response);
     },
   });
 });

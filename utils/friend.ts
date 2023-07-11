@@ -21,7 +21,7 @@ export function validateAddFriendRequest(
     };
   }
 
-  const friend = user.friends.includes(friendIdObj);
+  const friend = user.friends.find((friend) => friend.user === friendIdObj);
   if (friend) {
     return {
       valid: false,
