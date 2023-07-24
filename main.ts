@@ -7,20 +7,21 @@ import { usersRouter } from "@/routes/user.route.ts";
 import { appsRouter } from "@/routes/app.route.ts";
 import { authRouter } from "@/routes/auth.route.ts";
 import { devRouter } from "./routes/dev.route.ts";
-import { friendsRouter } from "./routes/friend.route.ts";
+import { friendshipRouter } from "./routes/friendship.route.ts";
 import { ObjectId } from "mongo";
 import { xor } from "https://deno.land/x/mongo@v0.31.2/src/auth/scram.ts";
 
 const app = new Application();
 const router = new Router();
 
-const x = new ObjectId("642d9b9bd46c654a0181c735");
+// const x = new ObjectId("642d9b9bd46c654a0181c735");
+
 // console.log(x.);
 router.use("/users", usersRouter.routes());
 router.use("/apps", appsRouter.routes());
 router.use("/auth", authRouter.routes());
 router.use("/dev", devRouter.routes());
-router.use("/friend", friendsRouter.routes());
+router.use("/friendships", friendshipRouter.routes());
 
 router.get("/", (ctx) => {
   // add a button to login with google

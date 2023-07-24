@@ -103,7 +103,7 @@ authRouter.post("/email/register", async (ctx) => {
       email: userData.email,
       username: userData.username,
       profilePicture: imgUrl,
-      birthday: userData.birthday,
+      birthday: userData.birthdate,
       provider: ["email"],
       apps: [],
       appUsers: [],

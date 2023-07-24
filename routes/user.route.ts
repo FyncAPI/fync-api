@@ -160,8 +160,9 @@ usersRouter
         {
           $match: { _id: new ObjectId(ctx.params.id) },
         },
-        ...populateByIds("inwardFriendRequests", "users"),
+        ...populateByIds("users", "inwardFriendRequests"),
       ]).toArray();
+      console.log(users, "inwardadsfdssdf");
 
       if (users.length === 0) {
         ctx.response.status = 404;
@@ -169,15 +170,18 @@ usersRouter
         return;
       }
 
-      const friends = z
-        .array(userParser)
-        .parse((users[0] as UserSchema).inwardFriendRequests);
+      // const friends = z
+      //   .array(userParser)
+      //   .parse((users[0] as UserSchema).inwardFriendRequests);
 
-      ctx.response.body = friends || [];
+      ctx.response.body = {
+        success: true,
+        data: (users[0] as UserSchema).inwardFriendRequests,
+      };
     } catch (e) {
-      console.log(e);
+      console.log(e, "error incomingsjfads");
       ctx.response.status = 400;
-      ctx.response.body = { message: "Invalid user ID" };
+      ctx.response.body = { message: "Invalid user ID", error: e };
     }
   })
   .get("/:id/friend-requests/out", async (ctx) => {
@@ -186,8 +190,9 @@ usersRouter
         {
           $match: { _id: new ObjectId(ctx.params.id) },
         },
-        ...populateByIds("outwardFriendRequests", "users"),
+        ...populateByIds("users", "outwardFriendRequests"),
       ]).toArray();
+      console.log(users, "outwardx");
 
       if (users.length === 0) {
         ctx.response.status = 404;
@@ -210,7 +215,7 @@ usersRouter
         {
           $match: { _id: new ObjectId(ctx.params.id) },
         },
-        ...populateByIds("declinedFriendRequests", "users"),
+        ...populateByIds("users", "declinedFriendRequests"),
       ]).toArray();
 
       if (users.length === 0) {
@@ -236,7 +241,7 @@ usersRouter
         {
           $match: { _id: new ObjectId(ctx.params.id) },
         },
-        ...populateByIds("canceledFriendRequests", "users"),
+        ...populateByIds("users", "canceledFriendRequests"),
       ]).toArray();
 
       if (users.length === 0) {
