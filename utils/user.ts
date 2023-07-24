@@ -1,4 +1,3 @@
-import { AggregatePipeline } from "https://deno.land/x/mongo@v0.31.2/mod.ts";
 import { populateById, populateByIds } from "../db.ts";
 
 export function queryTranslator(query: URLSearchParams) {
