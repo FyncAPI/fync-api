@@ -1,0 +1,57 @@
+openapi: 3.0.0
+info:
+  title: FYNC
+  version: 0.0.1
+components:
+  schemas:
+    AppSchema:
+      type: object
+      properties:
+        _id:
+          type: string # Assuming ObjectId is a string in your MongoDB
+        name:
+          type: string
+        description:
+          type: string
+        appStoreId:
+          type: string
+          nullable: true # To represent optional fields
+        androidPackageName:
+          type: string
+          nullable: true
+        url:
+          type: string
+        redirectUrl:
+          type: string
+          nullable: true
+        image:
+          type: string
+        users:
+          type: array
+          items:
+            type: string # Assuming ObjectId is a string in your MongoDB
+        events:
+          type: array
+          items:
+            type: string # Assuming ObjectId is a string in your MongoDB
+        interactions:
+          type: array
+          items:
+            type: string # Assuming ObjectId is a string in your MongoDB
+        createdAt:
+          type: string # Assuming createdAt is a string representation of a date
+          format: date-time
+paths:
+  /apps:
+    get:
+      summary: Retrieve a list of apps
+      description: Retrieves a list of apps.
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AppSchema"

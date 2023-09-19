@@ -5,8 +5,8 @@ import {
   createUserParser,
   Users,
 } from "@/models/user.model.ts";
-import { UploadFile } from "../storage.ts";
-import { optimizeImage } from "../image.ts";
+import { UploadFile } from "@/storage.ts";
+import { optimizeImage } from "@/image.ts";
 
 // const denoGrant = new DenoGrant({
 //   base_uri:
@@ -155,19 +155,18 @@ authRouter.post("/email", async (ctx) => {
 authRouter.post("/email/check", async (ctx) => {
   const body = await ctx.request.body({ type: "json" }).value;
 
-  const { email } = body.value;
+  const { email } = body;
 
   const user = await Users.findOne({ email });
 
   if (user) {
     ctx.response.body = {
-      error: "Email already exists",
+      available: false,
     };
     return;
   }
-
   ctx.response.body = {
-    message: "Email is available",
+    available: true,
   };
 
   return;

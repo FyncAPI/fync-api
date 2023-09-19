@@ -61,7 +61,7 @@ devRouter.post("/login/:userId", async (ctx) => {
   }
 });
 
-devRouter.post("/createApp", async (ctx) => {
+devRouter.post("/createApp", (ctx) => {
   // get auth header from request
   const authHeader = ctx.request.headers.get("Authorization");
 
