@@ -8,7 +8,6 @@ import { appsRouter } from "@/routes/app.route.ts";
 import { authRouter } from "@/routes/auth.route.ts";
 import { devRouter } from "@/routes/dev.route.ts";
 import { friendshipRouter } from "@/routes/friendship.route.ts";
-import { ObjectId } from "mongo";
 
 const app = new Application();
 const router = new Router();
