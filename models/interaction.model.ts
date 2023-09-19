@@ -1,5 +1,8 @@
 import { ObjectId } from "mongo";
 import { z } from "zod";
+import { db } from "@/db.ts";
+
+export type InteractionSchema = z.infer<typeof interactionParser>;
 
 export const interactionParser = z.object({
   _id: z.instanceof(ObjectId),
@@ -15,3 +18,5 @@ export const interactionParser = z.object({
   endDate: z.date(),
   createdAt: z.date(),
 });
+
+export const Interactions = db.collection<InteractionSchema>("interactions");

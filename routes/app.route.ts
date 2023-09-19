@@ -3,6 +3,7 @@ import { appParser, Apps, createAppParser } from "@/models/app.model.ts";
 import { ObjectId } from "mongo";
 import { createGuestUserParser, Users } from "@/models/user.model.ts";
 import { AppUsers } from "@/models/appUser.model.ts";
+import { interactionParser, Interactions } from "@/models/interaction.model.ts";
 
 export const appsRouter = new Router();
 
@@ -26,6 +27,16 @@ appsRouter
       console.log(e);
       ctx.response.body = { message: "invalid app id" };
     }
+  })
+  .get("/clientId/:clientId", async (ctx) => {
+    const clientId = ctx.params.clientId;
+    const app = await Apps.findOne({ clientId });
+    if (!app) {
+      ctx.response.body = { message: "App not found" };
+      return;
+    }
+    ctx.response.body = app;
+    return;
   });
 
 appsRouter
@@ -133,9 +144,56 @@ appsRouter
   })
   .post("/:appId/create-user/existing", async (ctx) => {
     // TODO link existing user to app
-    // flow => hmmmmm only for hh
   })
-  .post("/:appId/create-interaction", async (ctx) => {});
+  .post("/:appId/create-interaction", async (ctx) => {
+    try {
+      const appId = new ObjectId(ctx.params.appId);
+      const body = ctx.request.body({ type: "json" }).value;
+
+      const app = await Apps.findOne({ _id: appId });
+      console.log(app);
+      if (app) {
+        const interaction = await interactionParser.parseAsync(body);
+        const interactionId = await Interactions.insertOne(interaction);
+
+        const appUpdated = await Apps.updateOne(
+          {
+            _id: appId,
+          },
+          {
+            $addToSet: {
+              interactions: interactionId,
+            },
+          }
+        );
+
+        if (!appUpdated) {
+          throw "cant add interaction into app";
+        }
+
+        ctx.response.body = {
+          success: true,
+          message: "interaction created successfully",
+          data: {
+            interaction: {
+              ...interaction,
+              _id: interactionId,
+            },
+          },
+        };
+      } else {
+        throw "App not found with this id";
+      }
+    } catch (err) {
+      console.log(err);
+
+      ctx.response.status = 500;
+      ctx.response.body = {
+        success: false,
+        message: err,
+      };
+    }
+  });
 
 appsRouter.put("/:id", async (ctx) => {
   const body = await ctx.request.body({ type: "json" }).value;

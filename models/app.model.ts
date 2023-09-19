@@ -9,6 +9,9 @@ export const appParser = z.object({
   name: z.string(),
   description: z.string(),
 
+  clientId: z.string(),
+  clientSecret: z.string(),
+
   appStoreId: z.string().optional(),
   androidPackageName: z.string().optional(),
   url: z.string(),
