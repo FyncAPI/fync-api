@@ -32,6 +32,7 @@ appsRouter
     const clientId = ctx.params.clientId;
     const app = await Apps.findOne({ clientId });
     if (!app) {
+      ctx.response.status = 404;
       ctx.response.body = { message: "App not found" };
       return;
     }
