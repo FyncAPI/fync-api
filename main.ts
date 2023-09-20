@@ -1,6 +1,7 @@
 import { Application, Router, isHttpError } from "oak";
 import { z } from "zod";
 import "loadenv";
+import { CorsOptionsDelegate, oakCors } from "cors";
 
 // import { User } from "@/models/user.ts";
 import { usersRouter } from "@/routes/user.route.ts";
@@ -28,7 +29,23 @@ app.use(async (context, next) => {
 
 router.use("/users", usersRouter.routes());
 router.use("/apps", appsRouter.routes());
-router.use("/auth", authRouter.routes());
+console.log(
+  Deno.env.get("ENV") == "dev" ? "https://fync.in" : "https://fync.in"
+);
+const corsOptionsDelegate: CorsOptionsDelegate<Request> = (request) => {
+  console.log(request.headers.get("origin"));
+  const whitelist = ["https://fync.in"];
+  if (Deno.env.get("ENV") == "dev") {
+    whitelist.push("http://localhost:8000");
+  }
+
+  const isOriginAllowed = whitelist.includes(
+    request.headers.get("origin") ?? ""
+  );
+
+  return { origin: isOriginAllowed }; //  Reflect (enable) the requested origin in the CORS response if isOriginAllowed is true
+};
+router.use("/auth", oakCors(corsOptionsDelegate), authRouter.routes());
 router.use("/dev", devRouter.routes());
 router.use("/friendships", friendshipRouter.routes());
 

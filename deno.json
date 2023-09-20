@@ -9,6 +9,7 @@
     "std/": "https://deno.land/std@0.192.0/",
     "oak": "https://deno.land/x/oak@v12.6.1/mod.ts",
     "oak/": "https://deno.land/x/oak@v12.6.1/",
+    "cors": "https://deno.land/x/cors@v1.2.2/mod.ts",
     "imagemagick": "https://deno.land/x/imagemagick_deno@0.0.19/mod.ts",
     "mongo": "https://deno.land/x/mongo@v0.32.0/mod.ts",
     "loadenv": "https://deno.land/std@0.127.0/dotenv/load.ts",

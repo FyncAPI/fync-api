@@ -7,6 +7,9 @@ import {
 } from "@/models/user.model.ts";
 import { UploadFile } from "@/storage.ts";
 import { optimizeImage } from "@/image.ts";
+import { Apps } from "@/models/app.model.ts";
+import { AuthCodes } from "@/models/authCode.model.ts";
+import { ObjectId } from "mongo";
 
 // const denoGrant = new DenoGrant({
 //   base_uri:
@@ -176,6 +179,48 @@ authRouter.post("/email/verify", async (ctx) => {
   const body = await ctx.request.body({ type: "json" }).value;
 
   const { email, code } = body.value;
+});
+
+authRouter.post("/authorize", async (ctx) => {
+  const { clientId, userId, scopes } = await ctx.request.body({ type: "json" })
+    .value;
+  console.log(clientId, userId, scopes);
+
+  const user = await Users.findOne({ _id: new ObjectId(userId) });
+  if (!user) {
+    ctx.response.status = 404;
+    ctx.response.body = {
+      error: "User not found",
+    };
+    console.log("User not found");
+    return;
+  }
+
+  const app = await Apps.findOne({ clientId });
+  if (!app) {
+    ctx.response.status = 404;
+    ctx.response.body = {
+      error: "App not found",
+    };
+    console.log("App not found");
+    return;
+  }
+
+  const authCodeId = await AuthCodes.insertOne({
+    clientId,
+    userId,
+    expireAt: new Date(Date.now() + 1000 * 60 * 10),
+    scopes,
+    used: false,
+  });
+
+  ctx.response.status = 201;
+  ctx.response.body = {
+    code: authCodeId,
+  };
+  console.log("Auth code created");
+
+  return;
 });
 
 // authRouter.get("/google", (ctx) => {
