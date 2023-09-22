@@ -6,7 +6,7 @@
   },
   "imports": {
     "@/": "./",
-    "std/": "https://deno.land/std@0.192.0/",
+    "std/": "https://deno.land/std@0.199.0/",
     "oak": "https://deno.land/x/oak@v12.6.1/mod.ts",
     "oak/": "https://deno.land/x/oak@v12.6.1/",
     "cors": "https://deno.land/x/cors@v1.2.2/mod.ts",

@@ -4,6 +4,8 @@ import { ObjectId } from "mongo";
 import { createGuestUserParser, Users } from "@/models/user.model.ts";
 import { AppUsers } from "@/models/appUser.model.ts";
 import { interactionParser, Interactions } from "@/models/interaction.model.ts";
+import { v5 } from "std/uuid/mod.ts";
+import { crypto, toHashString } from "std/crypto/mod.ts";
 
 export const appsRouter = new Router();
 
@@ -31,6 +33,7 @@ appsRouter
   .get("/clientId/:clientId", async (ctx) => {
     const clientId = ctx.params.clientId;
     const app = await Apps.findOne({ clientId });
+    console.log(app, "asdfg");
     if (!app) {
       ctx.response.status = 404;
       ctx.response.body = { message: "App not found" };
@@ -58,8 +61,19 @@ appsRouter
       const error = result.error.format();
       ctx.response.body = error;
     } else {
+      const clientId = crypto.randomUUID();
+
+      const hash = await crypto.subtle.digest(
+        "SHA-256",
+        new TextEncoder().encode(crypto.randomUUID())
+      ); // hash the message ')
+
+      const clientSecret = toHashString(hash);
+
       const app = await Apps.insertOne({
         ...result.data,
+        clientId,
+        clientSecret,
         createdAt: new Date(),
         events: [],
         users: [],

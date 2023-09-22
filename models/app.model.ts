@@ -32,6 +32,8 @@ export const createAppParser = appParser.omit({
   users: true,
   events: true,
   interactions: true,
+  clientId: true,
+  clientSecret: true,
 });
 
 export const Apps = db.collection<AppSchema>("apps");

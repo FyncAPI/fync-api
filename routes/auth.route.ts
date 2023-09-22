@@ -10,6 +10,8 @@ import { optimizeImage } from "@/image.ts";
 import { Apps } from "@/models/app.model.ts";
 import { AuthCodes } from "@/models/authCode.model.ts";
 import { ObjectId } from "mongo";
+import { oakCors } from "https://deno.land/x/cors@v1.2.2/oakCors.ts";
+import { AccessTokens } from "@/models/accessToken.ts";
 
 // const denoGrant = new DenoGrant({
 //   base_uri:
@@ -181,22 +183,113 @@ authRouter.post("/email/verify", async (ctx) => {
   const { email, code } = body.value;
 });
 
-authRouter.post("/authorize", async (ctx) => {
-  const { clientId, userId, scopes } = await ctx.request.body({ type: "json" })
-    .value;
-  console.log(clientId, userId, scopes);
+authRouter.post(
+  "/authorize",
+  oakCors({
+    origin: "https://fync.in",
+  }),
+  async (ctx) => {
+    const { clientId, userId, scopes } = await ctx.request.body({
+      type: "json",
+    }).value;
+    console.log(clientId, userId, scopes);
 
-  const user = await Users.findOne({ _id: new ObjectId(userId) });
-  if (!user) {
-    ctx.response.status = 404;
+    const user = await Users.findOne({ _id: new ObjectId(userId) });
+    if (!user) {
+      ctx.response.status = 404;
+      ctx.response.body = {
+        error: "User not found",
+      };
+      console.log("User not found");
+      return;
+    }
+
+    const app = await Apps.findOne({ clientId });
+    if (!app) {
+      ctx.response.status = 404;
+      ctx.response.body = {
+        error: "App not found",
+      };
+      console.log("App not found");
+      return;
+    }
+
+    const authCodeId = await AuthCodes.insertOne({
+      clientId,
+      userId,
+      expireAt: new Date(Date.now() + 1000 * 60 * 10),
+      scopes,
+      used: false,
+    });
+
+    ctx.response.status = 201;
     ctx.response.body = {
-      error: "User not found",
+      code: authCodeId,
     };
-    console.log("User not found");
+    console.log("Auth code created");
+
+    return;
+  }
+);
+
+authRouter.post("/access_token", async (ctx) => {
+  console.log("got here");
+  const body = await ctx.request.body({
+    type: "form",
+  }).value;
+
+  const headers = ctx.request.headers;
+  console.log(headers, "headers");
+
+  // const { code, client_id, client_secret, grant_type } = body;
+  const code = body.get("code");
+  const client_id =
+    body.get("client_id") ||
+    atob(headers.get("Authorization")?.split(" ")[1] || "").split(":")[0];
+  const client_secret =
+    body.get("client_secret") ||
+    atob(headers.get("Authorization")?.split(" ")[1] || "").split(":")[1];
+  const grant_type = body.get("grant_type");
+
+  console.log(body, code, client_id, "fso");
+
+  if (!code || !client_id || !grant_type) {
+    ctx.response.status = 400;
+    ctx.response.body = {
+      error: "Invalid request",
+    };
+    console.log("Invalid request");
     return;
   }
 
-  const app = await Apps.findOne({ clientId });
+  console.log(code, client_id, client_secret, grant_type, "so");
+
+  const authCode = await AuthCodes.findOne({
+    _id: new ObjectId(code),
+    clientId: client_id,
+  });
+
+  if (!authCode) {
+    ctx.response.status = 404;
+    ctx.response.body = {
+      error: "Auth code not found",
+    };
+    console.log("Auth code not found");
+    return;
+  }
+
+  if (authCode.used) {
+    ctx.response.status = 400;
+    ctx.response.body = {
+      error: "Auth code already used",
+    };
+    console.log("Auth code already used");
+    return;
+  }
+
+  // check if client id and secret match
+  const app = await Apps.findOne({ clientId: client_id });
+
   if (!app) {
     ctx.response.status = 404;
     ctx.response.body = {
@@ -206,23 +299,74 @@ authRouter.post("/authorize", async (ctx) => {
     return;
   }
 
-  const authCodeId = await AuthCodes.insertOne({
-    clientId,
-    userId,
-    expireAt: new Date(Date.now() + 1000 * 60 * 10),
-    scopes,
-    used: false,
+  if (app.clientSecret != client_secret) {
+    ctx.response.status = 400;
+    ctx.response.body = {
+      error: "Invalid client secret",
+    };
+    console.log("Invalid client secret");
+    return;
+  }
+
+  const user = await Users.findOne({ _id: new ObjectId(authCode.userId) });
+
+  if (!user) {
+    ctx.response.status = 404;
+    ctx.response.body = {
+      error: "User not found",
+    };
+    console.log("User not found");
+    return;
+  }
+
+  const access_token = await bcrypt.hash(
+    authCode._id.toString(),
+    await bcrypt.genSalt(10)
+  );
+
+  // const refresh_token = await bcrypt.hash(
+  //   authCode._id.toString(),
+  //   await bcrypt.genSalt(10)
+  // );
+
+  const tokenId = await AccessTokens.insertOne({
+    accessToken: access_token,
+    tokenType: "Bearer",
+    // refresh_token,
+    clientId: authCode.clientId,
+    userId: authCode.userId,
+    expireAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5),
+    scopes: authCode.scopes,
   });
 
-  ctx.response.status = 201;
-  ctx.response.body = {
-    code: authCodeId,
-  };
-  console.log("Auth code created");
+  await AuthCodes.updateOne(
+    { _id: new ObjectId(code) },
+    { $set: { used: true } }
+  );
 
+  const token = await AccessTokens.findOne({ _id: new ObjectId(tokenId) });
+
+  console.log(token);
+  ctx.response.status = 201;
+  ctx.response.type = "json";
+  ctx.response.body = {
+    access_token: token?.accessToken,
+    token_type: "Bearer",
+    expires_in: 1000 * 60 * 60 * 24 * 5, // Token expiration in seconds
+    scope: authCode.scopes.join(","), // Adjust based on your scopes
+  };
+
+  console.log(
+    {
+      access_token: token?.accessToken,
+      token_type: "Bearer",
+      expires_in: 1000 * 60 * 60 * 24 * 5, // Token expires in 5 days
+      scope: authCode.scopes.join(","), // Adjust based on your scopes
+    },
+    "uor"
+  );
   return;
 });
-
 // authRouter.get("/google", (ctx) => {
 //   //   ctx.response.body = "Google Auth";
 //   const googleAuthorizationURI = denoGrant

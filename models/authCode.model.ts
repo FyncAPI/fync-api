@@ -11,9 +11,9 @@ export const authCodeParser = z.object({
   used: z.boolean(),
 });
 
-export type AppUserSchema = z.infer<typeof authCodeParser>;
+export type AuthCodeSchema = z.infer<typeof authCodeParser>;
 
-export const AuthCodes = db.collection<AppUserSchema>("authCodes");
+export const AuthCodes = db.collection<AuthCodeSchema>("authCodes");
 
 AuthCodes.createIndexes({
   indexes: [
