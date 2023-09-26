@@ -41,12 +41,12 @@ authRouter.post("/email/register", async (ctx) => {
   });
   const file = body.files?.[0];
 
-  // if (!file || !file.content) {
-  //   ctx.response.body = {
-  //     error: "No pfp",
-  //   };
-  //   return;
-  // }
+  if (!file || !file.content) {
+    ctx.response.body = {
+      error: "No pfp",
+    };
+    return;
+  }
 
   console.log(body.fields, "fields");
 
@@ -77,16 +77,16 @@ authRouter.post("/email/register", async (ctx) => {
       return;
     }
 
-    // const profilePic = new File([file.content], file.filename || "zry", {
-    //   type: file.contentType,
-    // });
+    const profilePic = new File([file.content], file.filename || "zry", {
+      type: file.contentType,
+    });
 
-    // const optimizedPfp = await optimizeImage(profilePic);
+    const optimizedPfp = await optimizeImage(profilePic);
 
-    // const imgUrl = await UploadFile(
-    //   optimizedPfp,
-    //   "prof" + body.fields.name + Date.now()
-    // );
+    const imgUrl = await UploadFile(
+      optimizedPfp,
+      "prof" + body.fields.name + Date.now()
+    );
 
     const userData = result.data;
     // const salt = crypto.getRandomValues(new Uint8Array(16));
@@ -95,7 +95,7 @@ authRouter.post("/email/register", async (ctx) => {
 
     const userId = await Users.insertOne({
       ...userData,
-      // profilePicture: "Testimg",
+      profilePicture: imgUrl,
       password: hashedPassword,
       provider: ["email"],
       apps: [],
@@ -112,7 +112,7 @@ authRouter.post("/email/register", async (ctx) => {
       name: userData.name,
       email: userData.email,
       username: userData.username,
-      // profilePicture: imgUrl,
+      profilePicture: imgUrl,
       birthday: userData.birthdate,
       provider: ["email"],
       apps: [],
