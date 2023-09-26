@@ -75,16 +75,16 @@ authRouter.post("/email/register", async (ctx) => {
       return;
     }
 
-    const profilePic = new File([file.content], file.filename || "zry", {
-      type: file.contentType,
-    });
+    // const profilePic = new File([file.content], file.filename || "zry", {
+    //   type: file.contentType,
+    // });
 
-    const optimizedPfp = await optimizeImage(profilePic);
+    // const optimizedPfp = await optimizeImage(profilePic);
 
-    const imgUrl = await UploadFile(
-      optimizedPfp,
-      "prof" + body.fields.name + Date.now()
-    );
+    // const imgUrl = await UploadFile(
+    //   optimizedPfp,
+    //   "prof" + body.fields.name + Date.now()
+    // );
 
     const userData = result.data;
     const salt = await bcrypt.genSalt(10);
@@ -92,7 +92,7 @@ authRouter.post("/email/register", async (ctx) => {
 
     const userId = await Users.insertOne({
       ...userData,
-      profilePicture: imgUrl,
+      profilePicture: "Testimg",
       password: hashedPassword,
       provider: ["email"],
       apps: [],
