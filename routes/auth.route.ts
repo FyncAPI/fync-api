@@ -48,6 +48,8 @@ authRouter.post("/email/register", async (ctx) => {
     return;
   }
 
+  console.log(form);
+
   const result = createEmailUserParser.safeParse(body.fields);
 
   if (!result.success) {
@@ -92,7 +94,7 @@ authRouter.post("/email/register", async (ctx) => {
 
     const userId = await Users.insertOne({
       ...userData,
-      profilePicture: "Testimg",
+      // profilePicture: "Testimg",
       password: hashedPassword,
       provider: ["email"],
       apps: [],
@@ -109,7 +111,7 @@ authRouter.post("/email/register", async (ctx) => {
       name: userData.name,
       email: userData.email,
       username: userData.username,
-      profilePicture: imgUrl,
+      // profilePicture: imgUrl,
       birthday: userData.birthdate,
       provider: ["email"],
       apps: [],
@@ -120,6 +122,7 @@ authRouter.post("/email/register", async (ctx) => {
       createdAt: new Date(),
     };
 
+    console.log(user, "userser created");
     ctx.response.body = {
       message: "User created",
       user: user,
