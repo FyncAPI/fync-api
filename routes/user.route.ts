@@ -12,6 +12,8 @@ import { Friendships, FriendshipSchema } from "../models/friendship.model.ts";
 import { populateById, populateByIds } from "../db.ts";
 import { validateAddFriendRequest } from "../utils/friend.ts";
 import { queryTranslator } from "../utils/user.ts";
+import { authorize } from "@/middleware/authorize.ts";
+import { scopes } from "@/utils/scope.ts";
 
 export const usersRouter = new Router();
 
@@ -99,6 +101,20 @@ usersRouter
     const user = await Users.deleteOne({ _id: new ObjectId(ctx.params.id) });
     ctx.response.body = user;
   });
+
+usersRouter.get("/@me", authorize(scopes.read.profile), async (ctx) => {
+  console.log(ctx.state.token);
+  // ctx.response.body = ctx.state.token;
+  const user = await Users.findOne({ _id: ctx.state.token.userId });
+
+  if (!user) {
+    ctx.response.status = 404;
+    ctx.response.body = { message: "User not found" };
+    return;
+  }
+
+  ctx.response.body = user;
+});
 
 usersRouter
   .get("/:id/friends", async (ctx) => {

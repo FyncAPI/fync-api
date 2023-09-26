@@ -7,80 +7,104 @@ import {
   Users,
 } from "@/models/user.model.ts";
 import { Devs } from "../models/dev.model.ts";
+import { authorize } from "@/middleware/authorize.ts";
+import { scopes } from "@/utils/scope.ts";
+import { populate } from "@/utils/db.ts";
+import { Apps, createAppParser } from "@/models/app.model.ts";
+import { toHashString } from "std/crypto/to_hash_string.ts";
+import { Status } from "https://deno.land/std@0.200.0/http/http_status.ts";
+import { populateByIds } from "@/db.ts";
 
 export const devRouter = new Router();
 
-devRouter.post("/login/:userId", async (ctx) => {
-  const userId = ctx.params.userId;
+devRouter.get("/profile", authorize(scopes.dev.admin), async (ctx) => {
+  const userId = ctx.state.token.userId;
+  const devUser = await Users.aggregate([
+    { $match: { _id: new ObjectId(userId) } },
+    ...populate("devs", "devId", "dev"),
+  ]).toArray();
 
-  const user = await Users.findOne({ _id: new ObjectId(userId) });
-
-  console.log(user, "user at devlogin");
-
-  if (!user) {
-    ctx.response.body = {
-      error: "User not found",
-    };
+  if (!devUser[0]) {
+    ctx.response.status = 404;
+    ctx.response.body = { message: "Dev not found" };
     return;
   }
 
-  if (user.devId) {
-    const dev = await Devs.findOne({ _id: new ObjectId(user.devId) });
+  ctx.response.body = devUser[0];
+});
 
-    if (!dev) {
-      ctx.response.body = {
-        error: "Dev not found",
-      };
-      return;
-    } else {
-      ctx.response.body = {
-        message: "Dev found",
-        dev: dev,
-      };
-    }
+devRouter.post("/app/create", authorize(scopes.dev.admin), async (ctx) => {
+  // get auth header from request
+  const body = await ctx.request.body({ type: "json" }).value;
+  body._id = new ObjectId(ctx.params.id);
+  console.log(body);
+
+  const result = createAppParser.safeParse(body);
+  console.log(result);
+  // console.log(body instanceof UserSchema);
+  if (!result.success) {
+    const error = result.error.format();
+    ctx.response.status = 400;
+    ctx.response.body = error;
   } else {
-    const dev = await Devs.insertOne({
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-      },
-      apps: [],
+    const clientId = crypto.randomUUID();
+
+    const hash = await crypto.subtle.digest(
+      "SHA-256",
+      new TextEncoder().encode(crypto.randomUUID())
+    ); // hash the message ')
+
+    const clientSecret = toHashString(hash);
+
+    const appId = await Apps.insertOne({
+      ...result.data,
+      clientId,
+      clientSecret,
       createdAt: new Date(),
+      events: [],
+      users: [],
+      interactions: [],
     });
 
-    await Users.updateOne(
-      { _id: new ObjectId(userId) },
-      { $set: { devId: dev } }
+    const dev = await Devs.updateOne(
+      { userId: new ObjectId(ctx.state.token.userId) },
+      { $push: { apps: appId } }
     );
 
-    ctx.response.body = {
-      message: "Dev created",
-      dev: dev,
-    };
+    if (!dev || !dev.modifiedCount) {
+      ctx.response.status = 404;
+      ctx.response.body = { message: "Dev not found" };
+      return;
+    }
+
+    ctx.response.status = Status.Created;
+    ctx.response.body = appId;
   }
 });
 
-devRouter.post("/createApp", (ctx) => {
-  // get auth header from request
-  const authHeader = ctx.request.headers.get("Authorization");
+devRouter.get("/apps", authorize(scopes.dev.admin), async (ctx) => {
+  const dev = await Devs.aggregate([
+    { $match: { userId: new ObjectId(ctx.state.token.userId) } },
+    ...populateByIds("apps", "apps"),
+  ]).toArray();
 
-  // if no auth header, return error
-  if (!authHeader) {
-    ctx.response.body = {
-      error: "No auth header",
-    };
+  if (!dev[0]) {
+    ctx.response.status = 404;
+    ctx.response.body = { message: "Dev not found" };
+    return;
   }
 
-  // get auth header value
-  const token = authHeader.split(" ")[1];
+  ctx.response.body = dev[0].apps;
+});
 
-  // if no token, return error
-  if (!token) {
-    ctx.response.body = {
-      error: "No token",
-    };
+devRouter.get("/apps/:appId", authorize(scopes.dev.admin), async (ctx) => {
+  const app = await Apps.findOne({ _id: new ObjectId(ctx.params.appId) });
+
+  if (!app) {
+    ctx.response.status = 404;
+    ctx.response.body = { message: "App not found" };
+    return;
   }
 
-  // get user from token
+  ctx.response.body = app;
 });

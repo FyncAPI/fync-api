@@ -4,11 +4,7 @@ import { z } from "zod";
 
 export const devParser = z.object({
   _id: z.instanceof(ObjectId),
-  user: z.object({
-    _id: z.instanceof(ObjectId),
-    name: z.string(),
-    email: z.string(),
-  }),
+  userId: z.instanceof(ObjectId),
   website: z.string().optional(),
   apps: z.array(z.instanceof(ObjectId)),
   apiKeys: z.array(z.string()).optional(),

@@ -12,6 +12,8 @@ import { AuthCodes } from "@/models/authCode.model.ts";
 import { ObjectId } from "mongo";
 import { oakCors } from "https://deno.land/x/cors@v1.2.2/oakCors.ts";
 import { AccessTokens } from "@/models/accessToken.ts";
+import { Devs } from "@/models/dev.model.ts";
+import { scopes } from "@/utils/scope.ts";
 
 // const denoGrant = new DenoGrant({
 //   base_uri:
@@ -285,6 +287,24 @@ authRouter.post("/access_token", async (ctx) => {
     };
     console.log("Auth code already used");
     return;
+  }
+
+  if (authCode.scopes.includes(scopes.dev.admin)) {
+    const dev = await Devs.findOne({ userId: new ObjectId(authCode.userId) });
+    console.log("dev", dev);
+    if (!dev) {
+      // create dev
+      const devId = await Devs.insertOne({
+        userId: new ObjectId(authCode.userId),
+        apps: [],
+        createdAt: new Date(),
+      });
+
+      await Users.updateOne(
+        { _id: new ObjectId(authCode.userId) },
+        { $set: { devId: devId } }
+      );
+    }
   }
 
   // check if client id and secret match
