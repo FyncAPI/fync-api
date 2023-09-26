@@ -41,14 +41,14 @@ authRouter.post("/email/register", async (ctx) => {
   });
   const file = body.files?.[0];
 
-  if (!file || !file.content) {
-    ctx.response.body = {
-      error: "No pfp",
-    };
-    return;
-  }
+  // if (!file || !file.content) {
+  //   ctx.response.body = {
+  //     error: "No pfp",
+  //   };
+  //   return;
+  // }
 
-  console.log(form);
+  console.log(body.fields, "fields");
 
   const result = createEmailUserParser.safeParse(body.fields);
 
