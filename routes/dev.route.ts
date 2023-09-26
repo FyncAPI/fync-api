@@ -1,6 +1,5 @@
 import { Router } from "oak";
 import { ObjectId } from "mongo";
-import * as bcrypt from "bcrypt";
 import {
   createEmailUserParser,
   createUserParser,

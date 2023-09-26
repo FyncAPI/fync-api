@@ -1,5 +1,5 @@
 import { Router } from "oak";
-import * as bcrypt from "bcrypt";
+// import * as bcrypt from "bcrypt";
 import {
   createEmailUserParser,
   createUserParser,
@@ -89,8 +89,9 @@ authRouter.post("/email/register", async (ctx) => {
     // );
 
     const userData = result.data;
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(userData.password, salt);
+    // const salt = crypto.getRandomValues(new Uint8Array(16));
+    // const hashedPassword = await bcrypt.hash(userData.password, salt);
+    const hashedPassword = userData.password;
 
     const userId = await Users.insertOne({
       ...userData,
@@ -342,10 +343,7 @@ authRouter.post("/access_token", async (ctx) => {
     return;
   }
 
-  const access_token = await bcrypt.hash(
-    authCode._id.toString(),
-    await bcrypt.genSalt(10)
-  );
+  const access_token = crypto.randomUUID();
 
   // const refresh_token = await bcrypt.hash(
   //   authCode._id.toString(),
