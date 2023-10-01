@@ -18,6 +18,7 @@ Fync API is a powerful tool that allows you to manage friendships with anyone!!
 
 
 ## Checklist
+- [ ] dev portal
 - [ ] oauth
 - [ ] routes for friends
 - [ ] routes for friendships
