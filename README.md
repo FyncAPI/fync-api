@@ -1,9 +1,10 @@
 # Fync API
 
-Fync API is a powerful tool that allows you to sync and manage your friends from all stages of your life in one central platform. With OAuth support for developers, you can easily integrate this API into your applications and provide a seamless experience for users to find and connect with friends.
+Fync API is a powerful tool that allows you to manage friendships with anyone!!
 
 ## Table of Contents
 
+- [Checklist](#checklist)
 - [Getting Started](#getting-started)
   - [Setup](#setup)
   - [Authentication](#authentication)
@@ -15,8 +16,15 @@ Fync API is a powerful tool that allows you to sync and manage your friends from
 - [Contributing](#contributing)
 - [License](#license)
 
-## Getting Started
 
+## Checklist
+- [ ] oauth
+- [ ] routes for friends
+- [ ] routes for friendships
+- [ ] docs
+- [ ] unity sdk
+
+## Getting Started
 
 ### Setup
 
