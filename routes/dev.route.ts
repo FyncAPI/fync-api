@@ -88,9 +88,11 @@ devRouter.get("/apps", authorize(scopes.dev.admin), async (ctx) => {
     ...populateByIds("apps", "apps"),
   ]).toArray();
 
+  console.log(dev);
   if (!dev[0]) {
-    ctx.response.status = 404;
-    ctx.response.body = { message: "Dev not found" };
+    // ctx.response.status = 404;
+    // ctx.response.body = { message: "Dev not found" };
+    ctx.response.body = [];
     return;
   }
 
