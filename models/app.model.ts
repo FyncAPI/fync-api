@@ -14,14 +14,17 @@ export const appParser = z.object({
 
   appStoreId: z.string().optional(),
   androidPackageName: z.string().optional(),
-  url: z.string().optional(),
+  url: z
+    .string()
+    .regex(/^(http:\/\/|https:\/\/)[^\s/$.?#].[^\s]*$/)
+    .optional(),
 
-  redirectUrl: z.string().optional(),
+  redirects: z.array(z.string().url()).optional(),
 
   image: z.string().optional(),
-  users: z.array(z.instanceof(ObjectId)),
-  events: z.array(z.instanceof(ObjectId)),
-  interactions: z.array(z.instanceof(ObjectId)),
+  users: z.array(z.string()),
+  events: z.array(z.string()),
+  interactions: z.array(z.string()),
 
   createdAt: z.date(),
 });

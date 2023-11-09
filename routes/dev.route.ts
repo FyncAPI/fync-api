@@ -10,7 +10,7 @@ import { Devs } from "../models/dev.model.ts";
 import { authorize } from "@/middleware/authorize.ts";
 import { scopes } from "@/utils/scope.ts";
 import { populate } from "@/utils/db.ts";
-import { Apps, createAppParser } from "@/models/app.model.ts";
+import { appParser, Apps, createAppParser } from "@/models/app.model.ts";
 import { toHashString } from "std/crypto/to_hash_string.ts";
 import { Status } from "https://deno.land/std@0.200.0/http/http_status.ts";
 import { populateByIds } from "@/db.ts";
@@ -109,4 +109,31 @@ devRouter.get("/apps/:appId", authorize(scopes.dev.admin), async (ctx) => {
   }
 
   ctx.response.body = app;
+});
+devRouter.put("/apps/:id", authorize(scopes.dev.admin), async (ctx) => {
+  console.log("here");
+  const body = await ctx.request.body({ type: "json" }).value;
+
+  console.log(body);
+  const result = appParser.partial().safeParse(body);
+  console.log(result, "updating app");
+
+  if (!result.success) {
+    const error = result.error.format();
+
+    ctx.response.body = error;
+  } else {
+    console.log(result.data, "result data");
+    const res = await Apps.updateOne(
+      { _id: new ObjectId(ctx.params.id) },
+      { $set: result.data }
+    );
+    if (!res.matchedCount) {
+      ctx.response.body = { message: "App not found" };
+      return;
+    }
+    console.log(res, "res");
+    const app = await Apps.findOne({ _id: new ObjectId(ctx.params.id) });
+    ctx.response.body = app;
+  }
 });

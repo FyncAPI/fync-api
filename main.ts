@@ -27,6 +27,14 @@ app.use(async (context, next) => {
   }
 });
 
+// logging middleware
+app.use(async (ctx, next) => {
+  await next();
+  const rt = ctx.response.headers.get("X-Response-Time");
+  console.log(ctx.request.hasBody);
+  console.log(`${ctx.request.method} ${ctx.request.url} - ${rt}`);
+});
+
 router.use("/users", usersRouter.routes());
 router.use("/apps", appsRouter.routes());
 router.use("/auth", authRouter.routes());
@@ -76,7 +84,7 @@ if (!result.success) {
 }
 
 app.use(router.routes());
-app.use(router.allowedMethods());
+// app.use(router.allowedMethods());
 
 //console.log("Server running on port 8000");
 //await app.listen({ port: 8000 });

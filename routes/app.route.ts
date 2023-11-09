@@ -210,24 +210,6 @@ appsRouter
     }
   });
 
-appsRouter.put("/:id", async (ctx) => {
-  const body = await ctx.request.body({ type: "json" }).value;
-
-  const result = appParser.partial().safeParse(body);
-  console.log(result);
-
-  if (!result.success) {
-    const error = result.error.format();
-
-    ctx.response.body = error;
-  } else {
-    const app = await Apps.updateOne(
-      { _id: new ObjectId(ctx.params.id) },
-      { $set: result.data }
-    );
-    ctx.response.body = app;
-  }
-});
 appsRouter.delete("/:id", async (ctx) => {
   const app = await Apps.deleteOne({ _id: new ObjectId(ctx.params.id) });
   ctx.response.body = app;
