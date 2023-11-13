@@ -87,8 +87,14 @@ authRouter.post("/email/register", async (ctx) => {
     );
 
     const userData = result.data;
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(userData.password, salt);
+    const salt =
+      Deno.env.get("ENV") == "dev"
+        ? await bcrypt.genSalt(10)
+        : bcrypt.genSaltSync(10);
+    const hashedPassword =
+      Deno.env.get("ENV") == "dev"
+        ? await bcrypt.hash(userData.password, salt)
+        : bcrypt.hashSync(userData.password, salt);
 
     const userId = await Users.insertOne({
       ...userData,
@@ -142,7 +148,11 @@ authRouter.post("/email", async (ctx) => {
     return;
   }
 
-  const validPassword = await bcrypt.compare(password, userData.password);
+  const validPassword =
+    Deno.env.get("ENV") == "dev"
+      ? await bcrypt.compare(password, userData.password)
+      : bcrypt.compareSync(password, userData.password);
+
   if (!validPassword) {
     ctx.response.body = {
       error: "Invalid password",
@@ -339,10 +349,10 @@ authRouter.post("/access_token", async (ctx) => {
     return;
   }
 
-  const access_token = await bcrypt.hash(
-    authCode._id.toString(),
-    await bcrypt.genSalt(10)
-  );
+  const access_token =
+    Deno.env.get("ENV") == "dev"
+      ? await bcrypt.hash(authCode._id.toString(), await bcrypt.genSalt(10))
+      : bcrypt.hashSync(authCode._id.toString(), bcrypt.genSaltSync(10));
 
   // const refresh_token = await bcrypt.hash(
   //   authCode._id.toString(),
