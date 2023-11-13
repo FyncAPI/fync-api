@@ -40,7 +40,7 @@ friendshipRouter.put("/:id", async (ctx) => {
   } else {
     const res = await Friendships.updateOne(
       { _id: new ObjectId(ctx.params.id) },
-      { $set: body }
+      { $set: body },
     );
     ctx.response.body = res;
   }
@@ -49,7 +49,7 @@ friendshipRouter.put("/:id", async (ctx) => {
 friendshipRouter.post("/addfriendship/:id", async (ctx) => {
   const res = await Friendships.updateOne(
     { _id: new ObjectId(ctx.params.id) },
-    { $inc: { friendship: 1 } }
+    { $inc: { friendship: 1 } },
   );
   ctx.response.body = res;
 });

@@ -1,21 +1,28 @@
 export const scopes = {
   read: {
-    profile: "read:profile",
-    email: "read:email",
-    friends: "read:friends",
-    posts: "read:posts",
+    profile: "profile.read",
+    // email: "read:email",
+    friends: "friends.read",
+    posts: "posts.read",
   },
   write: {
-    profile: "write:profile",
-    email: "write:email",
-    friends: "write:friends",
-    apps: "write:apps",
-    friendship: "write:friendship",
+    // profile: "should",
+    // email: "write:email",
+    friends: "friends.write",
+    apps: "apps.write",
+    friendship: "friendship.write",
   },
   dev: {
     admin: "dev:admin",
   },
 } as const;
+// export const scopes = {
+//   profile: ["profile.read"],
+//   posts: ["posts.read"],
+//   apps: ["apps.read"],
+//   friend: ["friends.read", "friendrequest.send", "friendrequest.read"],
+//   dev: ["dev:admin"],
+// };
 
 export type ReadScopeValues = (typeof scopes.read)[keyof typeof scopes.read];
 export type WriteScopeValues = (typeof scopes.write)[keyof typeof scopes.write];

@@ -91,8 +91,8 @@ export const UploadFile = async (file: File, name?: string) => {
   b2_upload_headers.append(
     "X-Bz-File-Name",
     encodeURIComponent(
-      (name || file.name) + Date.now() + "." + file.type.split("/")[1]
-    )
+      (name || file.name) + Date.now() + "." + file.type.split("/")[1],
+    ),
   );
 
   b2_upload_headers.append("X-Bz-Content-Sha1", sha1);
@@ -108,11 +108,10 @@ export const UploadFile = async (file: File, name?: string) => {
   const b2_upload_json = await b2_upload_response.json();
 
   console.log(b2_upload_json);
-  const url =
-    b2_download_url +
+  const url = b2_download_url +
     "/file/" +
     encodeURIComponent(
-      Deno.env.get("B2BUCKETNAME")! + "/" + b2_upload_json.fileName
+      Deno.env.get("B2BUCKETNAME")! + "/" + b2_upload_json.fileName,
     );
 
   console.log(url);

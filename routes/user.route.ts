@@ -92,7 +92,7 @@ usersRouter
     } else {
       const user = await Users.updateOne(
         { _id: new ObjectId(ctx.params.id) },
-        { $set: body }
+        { $set: body },
       );
       ctx.response.body = user;
     }
@@ -314,7 +314,7 @@ usersRouter
               $each: [friend._id],
             },
           },
-        }
+        },
       );
 
       await Users.updateOne(
@@ -325,7 +325,7 @@ usersRouter
               $each: [user!._id],
             },
           },
-        }
+        },
       );
 
       ctx.response.body = {
@@ -360,7 +360,7 @@ usersRouter
 
       if (!user.inwardFriendRequests?.find((id) => id.equals(friendId))) {
         console.log(
-          user.inwardFriendRequests?.find((id) => id.equals(friendId))
+          user.inwardFriendRequests?.find((id) => id.equals(friendId)),
         );
         ctx.response.body = {
           message: "user has no friend request from this friend",
@@ -404,7 +404,7 @@ usersRouter
               friendship: friendship,
             },
           },
-        }
+        },
       );
 
       await Users.updateOne(
@@ -412,7 +412,7 @@ usersRouter
         {
           $pull: { inwardFriendRequests: user._id },
           $addToSet: { friends: { user: user._id, friendship: friendship } },
-        }
+        },
       );
 
       ctx.response.body = {
@@ -455,7 +455,7 @@ usersRouter
       // Remove friend from user's inwardFriendRequests
       await Users.updateOne(
         { _id: user._id },
-        { $pull: { inwardFriendRequests: friend._id } }
+        { $pull: { inwardFriendRequests: friend._id } },
       );
 
       await Users.updateOne(
@@ -463,7 +463,7 @@ usersRouter
         {
           $pull: { outwardFriendRequests: user._id },
           $addToSet: { declinedFriendRequests: user._id },
-        }
+        },
       );
 
       ctx.response.body = {
@@ -501,7 +501,7 @@ usersRouter
             { adder: new ObjectId(friendId), accepter: new ObjectId(id) },
           ],
         },
-        { $set: { removed: true } }
+        { $set: { removed: true } },
       );
 
       console.log(updatedFriendship, "updatedFriendship");
@@ -518,7 +518,7 @@ usersRouter
           $pull: {
             friends: { _id: friendship._id },
           },
-        }
+        },
       );
 
       ctx.response.body = updatedFriendship;

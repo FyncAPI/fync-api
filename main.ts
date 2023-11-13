@@ -1,4 +1,4 @@
-import { Application, Router, isHttpError } from "oak";
+import { Application, isHttpError, Router } from "oak";
 import { z } from "zod";
 import "loadenv";
 import { CorsOptionsDelegate, oakCors } from "cors";
@@ -30,9 +30,9 @@ app.use(async (context, next) => {
 // logging middleware
 app.use(async (ctx, next) => {
   await next();
-  const rt = ctx.response.headers.get("X-Response-Time");
+  // const rt = ctx.response.headers.get("X-Response-Time");
   console.log(ctx.request.hasBody);
-  console.log(`${ctx.request.method} ${ctx.request.url} - ${rt}`);
+  console.log(`${ctx.request.method} ${ctx.request.url} - `);
 });
 
 router.use("/users", usersRouter.routes());

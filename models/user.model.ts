@@ -31,7 +31,7 @@ export const userParser = z.object({
     z.object({
       friendship: friendshipParser.or(z.instanceof(ObjectId)),
       user: z.instanceof(ObjectId),
-    })
+    }),
   ),
 
   inwardFriendRequests: z.array(z.instanceof(ObjectId)).optional(),

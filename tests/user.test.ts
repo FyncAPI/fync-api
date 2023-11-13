@@ -394,7 +394,7 @@ Deno.test("user", async (t) => {
       for (const friend of response.data) {
         assert(
           friend.user._id.equals(createdUser2Id),
-          "Returned friend ids should match created user ids"
+          "Returned friend ids should match created user ids",
         );
       }
 

@@ -5,36 +5,36 @@ export function queryTranslator(query: URLSearchParams) {
   const filter = query.get("filter");
   const stages: (
     | {
-        $lookup: {
-          from: string;
-          localField: string;
-          foreignField: string;
-          as: string;
-        };
-        $unwind?: undefined;
-      }
+      $lookup: {
+        from: string;
+        localField: string;
+        foreignField: string;
+        as: string;
+      };
+      $unwind?: undefined;
+    }
     | {
-        $unwind: { path: string; preserveNullAndEmptyArrays: boolean };
-        $lookup?: undefined;
-      }
+      $unwind: { path: string; preserveNullAndEmptyArrays: boolean };
+      $lookup?: undefined;
+    }
     | { $unwind: string; $lookup?: undefined; $group?: undefined }
     | {
-        $group: {
-          [x: string]:
-            | string
-            | { $push: { $arrayElemAt: (string | number)[] } };
-          _id: string;
-        };
-        $unwind?: undefined;
-        $lookup?: undefined;
-      }
+      $group: {
+        [x: string]:
+          | string
+          | { $push: { $arrayElemAt: (string | number)[] } };
+        _id: string;
+      };
+      $unwind?: undefined;
+      $lookup?: undefined;
+    }
   )[] = [];
   if (filter) {
     filter.split(",").map((field) => {
       if (populatable.includes(field)) {
-        if (field === "friends")
+        if (field === "friends") {
           stages.push(...populateById("users", "friends.user"));
-        else stages.push(...populateByIds(field, field));
+        } else stages.push(...populateByIds(field, field));
       }
     });
   }

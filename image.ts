@@ -9,7 +9,7 @@ await initializeImageMagick(); // make sure to initialize first!
 
 export const optimizeImage = async (
   image: File,
-  size?: { w: number; h: number }
+  size?: { w: number; h: number },
 ) => {
   const bufar = await image.arrayBuffer();
   const data = new Uint8Array(bufar);

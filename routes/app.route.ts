@@ -47,7 +47,6 @@ appsRouter
   .post("/", async (ctx) => {
     /**
      * Create App account in fync api
-     *
      */
     const body = await ctx.request.body({ type: "json" }).value;
     body._id = new ObjectId(ctx.params.id);
@@ -65,7 +64,7 @@ appsRouter
 
       const hash = await crypto.subtle.digest(
         "SHA-256",
-        new TextEncoder().encode(crypto.randomUUID())
+        new TextEncoder().encode(crypto.randomUUID()),
       ); // hash the message ')
 
       const clientSecret = toHashString(hash);
@@ -85,8 +84,7 @@ appsRouter
   .post("/:appId/create-user/new", async (ctx) => {
     /**
      * create new user in fync api
-     *
-     **/
+     */
     if (!ctx.params.appId) {
       ctx.response.body = { message: "No app id provided" };
       return;
@@ -138,7 +136,7 @@ appsRouter
               // add app to user
               const user = await Users.updateOne(
                 { _id: userId },
-                { $push: { appUsers: newAppUserId } }
+                { $push: { appUsers: newAppUserId } },
               );
               console.log(user);
               ctx.response.body = {
@@ -179,7 +177,7 @@ appsRouter
             $addToSet: {
               interactions: interactionId,
             },
-          }
+          },
         );
 
         if (!appUpdated) {

@@ -3,7 +3,7 @@ import { UserSchema } from "../models/user.model.ts";
 
 export function validateAddFriendRequest(
   user: UserSchema | undefined,
-  friendId: string
+  friendId: string,
 ): { valid: boolean; message?: string } {
   if (!user || !ObjectId.isValid(user._id)) {
     return { valid: false, message: "Invalid user ID" };
@@ -29,8 +29,9 @@ export function validateAddFriendRequest(
     };
   }
 
-  const outwardFriendRequest =
-    user.outwardFriendRequests?.includes(friendIdObj);
+  const outwardFriendRequest = user.outwardFriendRequests?.includes(
+    friendIdObj,
+  );
   if (outwardFriendRequest) {
     return {
       valid: false,

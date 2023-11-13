@@ -2,7 +2,7 @@ export const populate = (
   col: string,
   local: string,
   localAs?: string,
-  field?: string
+  field?: string,
 ) => [
   {
     $lookup: {
@@ -24,7 +24,7 @@ export const populateArray = (
   col: string,
   local: string,
   field?: string,
-  localAs?: string
+  localAs?: string,
 ) => [
   {
     $lookup: {
