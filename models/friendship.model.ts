@@ -5,9 +5,9 @@ import { z } from "zod";
 export type FriendshipSchema = z.infer<typeof friendshipParser>;
 
 export const friendshipParser = z.object({
-  _id: z.instanceof(ObjectId),
-  adder: z.string().or(z.instanceof(ObjectId)),
-  accepter: z.string().or(z.instanceof(ObjectId)),
+  _id: z.instanceof(ObjectId).or(z.string()),
+  adder: z.string().or(z.instanceof(ObjectId).or(z.string())),
+  accepter: z.string().or(z.instanceof(ObjectId).or(z.string())),
   removed: z.boolean().optional(),
 
   friendship: z.number(),
@@ -15,7 +15,7 @@ export const friendshipParser = z.object({
   images: z.array(z.string()),
   videos: z.array(z.string()),
 
-  // sameApps: z.array(z.instanceof(ObjectId)),
+  // sameApps: z.array(z.instanceof(ObjectId).or(z.string())),
 
   createdAt: z.date(),
 });

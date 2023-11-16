@@ -3,12 +3,12 @@ import { db } from "../db.ts";
 import { z } from "zod";
 
 export const appUserParser = z.object({
-  _id: z.instanceof(ObjectId),
-  app: z.instanceof(ObjectId),
+  _id: z.instanceof(ObjectId).or(z.string()),
+  app: z.instanceof(ObjectId).or(z.string()),
 
-  fyncId: z.instanceof(ObjectId),
+  fyncId: z.instanceof(ObjectId).or(z.string()),
   appUserId: z.string(),
-  friends: z.array(z.instanceof(ObjectId)),
+  friends: z.array(z.instanceof(ObjectId).or(z.string())),
 
   appInteraction: z.object({
     friendshipCount: z.number(),

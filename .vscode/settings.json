@@ -1,4 +1,6 @@
 {
   "deno.enable": true,
-  "workbench.colorTheme": "Horizon Bold"
+  "workbench.colorTheme": "Horizon Bold",
+  "deno.lint": true,
+  "deno.unstable": true
 }

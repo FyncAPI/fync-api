@@ -16,9 +16,9 @@ import { friendshipParser } from "./friendship.model.ts";
 // }
 
 export const userParser = z.object({
-  _id: z.instanceof(ObjectId),
+  _id: z.instanceof(ObjectId).or(z.string()),
   provider: z.array(z.enum(["google", "facebook", "email"])).optional(),
-  devId: z.instanceof(ObjectId).optional(),
+  devId: z.instanceof(ObjectId).or(z.string()).optional(),
 
   username: z.string(),
   name: z.string(),
@@ -29,15 +29,23 @@ export const userParser = z.object({
 
   friends: z.array(
     z.object({
-      friendship: friendshipParser.or(z.instanceof(ObjectId)),
-      user: z.instanceof(ObjectId),
-    }),
+      friendship: friendshipParser.or(z.instanceof(ObjectId).or(z.string())),
+      user: z.instanceof(ObjectId).or(z.string()),
+    })
   ),
 
-  inwardFriendRequests: z.array(z.instanceof(ObjectId)).optional(),
-  outwardFriendRequests: z.array(z.instanceof(ObjectId)).optional(),
-  declinedFriendRequests: z.array(z.instanceof(ObjectId)).optional(),
-  canceledFriendRequests: z.array(z.instanceof(ObjectId)).optional(),
+  inwardFriendRequests: z
+    .array(z.instanceof(ObjectId).or(z.string()))
+    .optional(),
+  outwardFriendRequests: z
+    .array(z.instanceof(ObjectId).or(z.string()))
+    .optional(),
+  declinedFriendRequests: z
+    .array(z.instanceof(ObjectId).or(z.string()))
+    .optional(),
+  canceledFriendRequests: z
+    .array(z.instanceof(ObjectId).or(z.string()))
+    .optional(),
 
   email: z.string(),
   password: z.string().optional(),
@@ -47,8 +55,8 @@ export const userParser = z.object({
   phoneNumber: z.string().optional(),
   birthdate: z.string().optional(),
 
-  apps: z.array(z.instanceof(ObjectId)),
-  appUsers: z.instanceof(ObjectId).array(),
+  apps: z.array(z.instanceof(ObjectId).or(z.string())),
+  appUsers: z.instanceof(ObjectId).or(z.string()).array(),
 
   location: z
     .object({

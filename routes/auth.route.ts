@@ -11,7 +11,10 @@ import { Apps } from "@/models/app.model.ts";
 import { AuthCodes } from "@/models/authCode.model.ts";
 import { ObjectId } from "mongo";
 import { oakCors } from "https://deno.land/x/cors@v1.2.2/oakCors.ts";
-import { AccessTokens } from "@/models/accessToken.ts";
+import {
+  AccessTokens,
+  createAccessToken,
+} from "../models/accessToken.model.ts";
 import { Devs } from "@/models/dev.model.ts";
 import { scopes } from "@/utils/scope.ts";
 
@@ -105,8 +108,6 @@ authRouter.post("/email/register", async (ctx) => {
       appUsers: [],
       friends: [],
       verified: false,
-      // friendRequests: [],
-
       createdAt: new Date(),
     });
 
@@ -122,13 +123,15 @@ authRouter.post("/email/register", async (ctx) => {
       appUsers: [],
       friends: [],
       verified: false,
-
       createdAt: new Date(),
     };
 
+    const accessToken = await createAccessToken(userId);
+
     ctx.response.body = {
       message: "User created",
-      user: user,
+      user,
+      accessToken,
     };
   }
 });
@@ -162,10 +165,32 @@ authRouter.post("/email", async (ctx) => {
 
   delete userData.password;
   console.log("User logged in", userData);
+  // get access token
+  const accessToken =
+    Deno.env.get("ENV") == "dev"
+      ? await bcrypt.hash(userData._id.toString(), await bcrypt.genSalt(10))
+      : bcrypt.hashSync(userData._id, bcrypt.genSaltSync(10));
+
+  const tokenId = await AccessTokens.insertOne({
+    accessToken,
+    tokenType: "Bearer",
+    clientId: "",
+    userId: userData._id,
+    expireAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5),
+    scopes: [
+      scopes.read.friends,
+      scopes.read.profile,
+      scopes.read.posts,
+      scopes.write.friendship,
+      scopes.write.apps,
+      scopes.write.friends,
+    ],
+  });
 
   ctx.response.body = {
     message: "User logged in",
-    userData,
+    user: userData,
+    accessToken,
   };
 });
 

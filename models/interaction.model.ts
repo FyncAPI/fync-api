@@ -5,8 +5,8 @@ import { db } from "@/db.ts";
 export type InteractionSchema = z.infer<typeof interactionParser>;
 
 export const interactionParser = z.object({
-  _id: z.instanceof(ObjectId),
-  app: z.instanceof(ObjectId),
+  _id: z.instanceof(ObjectId).or(z.string()),
+  app: z.instanceof(ObjectId).or(z.string()),
   title: z.string(),
   description: z.string(),
   rewardDetail: z.string(),

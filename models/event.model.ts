@@ -17,7 +17,7 @@ export interface EventSchema {
 }
 
 export const eventParser = z.object({
-  _id: z.instanceof(ObjectId),
+  _id: z.instanceof(ObjectId).or(z.string()),
   name: z.string(),
   type: z.enum(["IRL", "APP"]),
   tags: z.array(z.string()),
@@ -28,7 +28,7 @@ export const eventParser = z.object({
   images: z.array(z.string()),
   videos: z.array(z.string()),
   markdown: z.string(),
-  interactions: z.array(z.instanceof(ObjectId)),
+  interactions: z.array(z.instanceof(ObjectId).or(z.string())),
 });
 
 export const Events = db.collection<EventSchema>("events");

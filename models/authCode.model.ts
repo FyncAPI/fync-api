@@ -3,9 +3,9 @@ import { db } from "@/db.ts";
 import { z } from "zod";
 
 export const authCodeParser = z.object({
-  _id: z.instanceof(ObjectId),
+  _id: z.instanceof(ObjectId).or(z.string()),
   clientId: z.string(),
-  userId: z.instanceof(ObjectId),
+  userId: z.instanceof(ObjectId).or(z.string()),
   expireAt: z.date(),
   scopes: z.array(z.string()),
   used: z.boolean(),

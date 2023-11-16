@@ -9,6 +9,16 @@ import { appsRouter } from "@/routes/app.route.ts";
 import { authRouter } from "@/routes/auth.route.ts";
 import { devRouter } from "@/routes/dev.route.ts";
 import { friendshipRouter } from "@/routes/friendship.route.ts";
+import {
+  App,
+  appParser,
+  Apps,
+  AppSchema,
+  createAppParser,
+} from "@/models/app.model.ts";
+import { toHashString } from "std/crypto/mod.ts";
+import * as bcrypt from "bcrypt";
+import { meRouter } from "@/routes/me.route.ts";
 
 const app = new Application();
 const router = new Router();
@@ -39,20 +49,58 @@ router.use("/users", usersRouter.routes());
 router.use("/apps", appsRouter.routes());
 router.use("/auth", authRouter.routes());
 router.use("/dev", devRouter.routes());
+router.use("/me", meRouter.routes());
 router.use("/friendships", friendshipRouter.routes());
+// router.get("/x", async (ctx) => {
+//   const accessToken =
+//     Deno.env.get("ENV") == "dev"
+//       ? await bcrypt.hash("test", await bcrypt.genSalt(10))
+//       : bcrypt.hashSync("testets", bcrypt.genSaltSync(10));
+
+//   ctx.response.body = { accessToken };
+// });
+router.get("/setup", async (ctx) => {
+  // check if db is empty
+  const appCount = await Apps.countDocuments();
+  if (appCount > 0) {
+    ctx.response.body = { error: "Apps already exist" };
+    return;
+  }
+  // create app in db as fync
+  const clientId = crypto.randomUUID();
+
+  const hash = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(crypto.randomUUID())
+  ); // hash the message ')
+
+  const clientSecret = toHashString(hash);
+
+  const fyncAppId = await Apps.insertOne({
+    name: "Fync",
+    description: "Sync your frinds",
+    url: "https://fync.in",
+    clientId,
+    clientSecret,
+    createdAt: new Date(),
+    redirects: ["https://fync.in/auth/callback"],
+    events: [],
+    users: [],
+    interactions: [],
+  });
+
+  ctx.response.body = { fyncAppId, clientId, clientSecret };
+});
 
 router.get("/", (ctx) => {
   // add a button to login with google
   ctx.response.body = `
   <html>
-    <head>
-      <title>Auth</title>
-      </head>
-      <body>
-                <h1>Welcome to Fync API</h1>
-        </body>
-        </html>
-        `;
+    <body>
+      <h1>Welcome to Fync API</h1>
+    </body>
+  </html>
+`;
 });
 
 router.get("/docs", async (ctx) => {
