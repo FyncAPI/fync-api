@@ -19,6 +19,8 @@ import {
 import { toHashString } from "std/crypto/mod.ts";
 import * as bcrypt from "bcrypt";
 import { meRouter } from "@/routes/me.route.ts";
+import { v1 } from "std/uuid/mod.ts";
+import { v1Router } from "@/routes/v1/v1.route.ts";
 
 const app = new Application();
 const router = new Router();
@@ -51,6 +53,8 @@ router.use("/auth", authRouter.routes());
 router.use("/dev", devRouter.routes());
 router.use("/me", meRouter.routes());
 router.use("/friendships", friendshipRouter.routes());
+
+router.use("/v1", v1Router.routes());
 // router.get("/x", async (ctx) => {
 //   const accessToken =
 //     Deno.env.get("ENV") == "dev"

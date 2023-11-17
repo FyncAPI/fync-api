@@ -25,7 +25,22 @@ usersRouter.use(async (ctx, next) => {
 
 usersRouter
   .get("/", async (ctx) => {
-    const users = await Users.find().toArray();
+    // if there is q
+    const search = ctx.request.url.searchParams.get("q");
+
+    const users = await Users.find(
+      search
+        ? {
+            $or: [
+              { username: { $regex: search, $options: "i" } }, // 'i' for case-insensitive
+              { name: { $regex: search, $options: "i" } },
+            ],
+          }
+        : {},
+      {
+        projection: { password: 0 },
+      }
+    ).toArray();
     ctx.response.body = users || [];
   })
   .get("/:id", async (ctx) => {

@@ -1,8 +1,17 @@
+import { ObjectId } from "mongo";
+
+export const matchId = (id: string) => {
+  return [
+    {
+      $match: { _id: new ObjectId(id) },
+    },
+  ];
+};
 export const populate = (
   col: string,
   local: string,
   localAs?: string,
-  field?: string,
+  field?: string
 ) => [
   {
     $lookup: {
@@ -24,7 +33,7 @@ export const populateArray = (
   col: string,
   local: string,
   field?: string,
-  localAs?: string,
+  localAs?: string
 ) => [
   {
     $lookup: {
