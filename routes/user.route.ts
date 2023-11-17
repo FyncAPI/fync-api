@@ -115,7 +115,7 @@ usersRouter.get("/@me", authorize(scopes.read.profile), async (ctx) => {
 });
 
 usersRouter
-  .get("/:id/friends", async (ctx) => {
+  .get("/:id/friends", authorize("friends.read"), async (ctx) => {
     try {
       if (!ctx.params.id) throw new Error("invalid user id");
       const users = await Users.aggregate([

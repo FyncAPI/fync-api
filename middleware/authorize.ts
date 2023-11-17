@@ -43,6 +43,7 @@ export const authorize =
     }
 
     ctx.state.token = dbToken;
+    ctx.state.userId = dbToken.userId;
 
     await next();
   };

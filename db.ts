@@ -4,15 +4,6 @@ import "loadenv";
 const envVars = Deno.env.toObject();
 const client = new MongoClient();
 
-// console.log(
-//   JSON.parse(envVars.DB_SERVERS).map((uri: string) => {
-//     return {
-//       host: uri,
-//       port: 27017,
-//     };
-//   })
-// );
-// await client.connect("mongodb://127.0.0.1:27017");
 await client.connect({
   db: envVars.DB_NAME,
   tls: true,
@@ -23,6 +14,7 @@ await client.connect({
     };
   }),
 
+  retryWrites: true,
   credential: {
     username: envVars.DB_USERNAME,
     password: envVars.DB_PASSWORD,

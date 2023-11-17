@@ -71,15 +71,6 @@ export const userParser = z.object({
 });
 
 export type UserSchema = z.infer<typeof userParser>;
-
-// export const createUserParser = userParser.omit({
-//   _id: true,
-//   verified: true,
-//   createdAt: true,
-//   friends: true,
-//   apps: true,
-// });
-
 export const createUserParser = userParser.pick({
   username: true,
   name: true,
