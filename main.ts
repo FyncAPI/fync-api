@@ -2,7 +2,6 @@ import { Application, isHttpError, Router } from "oak";
 import { z } from "zod";
 import "loadenv";
 import { CorsOptionsDelegate, oakCors } from "cors";
-
 // import { User } from "@/models/user.ts";
 import { usersRouter } from "@/routes/user.route.ts";
 import { appsRouter } from "@/routes/app.route.ts";

@@ -5,6 +5,7 @@ import { UserSchema, Users } from "@/models/user.model.ts";
 import { matchId, populateArray } from "@/utils/db.ts";
 import { Friendships } from "@/models/friendship.model.ts";
 import { ObjectId } from "mongo";
+import { validateAddFriendRequest } from "@/utils/friend.ts";
 
 export const v1Router = new Router();
 
@@ -93,7 +94,7 @@ v1Router.get("/friends/@me", authorize(scopes.read.friends), async (ctx) => {
     ctx.response.body = { error: "invalid user id" };
   }
 });
-v1Router.get("/users/", async (ctx) => {
+v1Router.get("/users", async (ctx) => {
   const search = ctx.request.url.searchParams.get("q");
 
   const users = await Users.find(
@@ -112,10 +113,69 @@ v1Router.get("/users/", async (ctx) => {
   ctx.response.body = users || [];
 });
 
+const q = (): number => 5;
+const x = async (): Promise<number> =>
+  setTimeout(() => {
+    return 8;
+  }, 400);
+
+const z = q();
+const y = await x();
+console.log(z, y);
+
 v1Router.post(
   "/users/:id/add-friend",
   authorize(scopes.write.friends),
   async (ctx) => {
-    const { id } = ctx.params;
+    const userId = new ObjectId(ctx.state.token.userId);
+    try {
+      const friendId = ctx.params.id;
+      const user = await Users.findOne({ _id: userId });
+
+      const { valid, message } = validateAddFriendRequest(user, friendId);
+
+      if (!valid) {
+        ctx.response.status = 400;
+        ctx.response.body = { message };
+        return;
+      }
+
+      const friend = await Users.findOne({
+        _id: new ObjectId(friendId),
+      });
+
+      if (!friend) {
+        ctx.response.status = 404;
+        ctx.response.body = { message: "friend not found" };
+        return;
+      }
+
+      // update the user.outwardFriendRequests to push the friend id
+      await Users.updateOne(
+        { _id: userId },
+        {
+          $addToSet: {
+            outwardFriendRequests: new ObjectId(friendId),
+          },
+        }
+      );
+
+      await Users.updateOne(
+        { _id: new ObjectId(friendId) },
+        {
+          $addToSet: {
+            inwardFriendRequests: user!._id,
+          },
+        }
+      );
+
+      ctx.response.body = {
+        success: true,
+        message: "friend request sent",
+      };
+    } catch (e) {
+      console.log(e);
+      ctx.response.body = { message: "invalid user id" };
+    }
   }
 );
