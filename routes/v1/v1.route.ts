@@ -39,6 +39,20 @@ v1Router.get("/users/@me", authorize(scopes.read.profile), async (ctx) => {
   ctx.response.body = user;
 });
 
+v1Router.get("/users/:id", authorize(scopes.read.profile), async (ctx) => {
+  console.log(ctx.state.token);
+  // ctx.response.body = ctx.state.token;
+  const user = await Users.findOne({ _id: new ObjectId(ctx.params.id) });
+
+  if (!user) {
+    ctx.response.status = 404;
+    console.log("user not found");
+    ctx.response.body = { message: "User not found" };
+    return;
+  }
+
+  ctx.response.body = user;
+});
 v1Router.get("/friends/@me", authorize(scopes.read.friends), async (ctx) => {
   try {
     console.log(ctx.state.token.userId);
@@ -112,16 +126,6 @@ v1Router.get("/users", async (ctx) => {
   ).toArray();
   ctx.response.body = users || [];
 });
-
-const q = (): number => 5;
-const x = async (): Promise<number> =>
-  setTimeout(() => {
-    return 8;
-  }, 400);
-
-const z = q();
-const y = await x();
-console.log(z, y);
 
 v1Router.post(
   "/users/:id/add-friend",
