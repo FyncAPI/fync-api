@@ -6,6 +6,8 @@ import { matchId, populateArray } from "@/utils/db.ts";
 import { Friendships } from "@/models/friendship.model.ts";
 import { ObjectId } from "mongo";
 import { validateAddFriendRequest } from "@/utils/friend.ts";
+import { populateByIds } from "@/db.ts";
+import { queryTranslator } from "@/utils/user.ts";
 
 export const v1Router = new Router();
 
@@ -41,8 +43,17 @@ v1Router.get("/users/@me", authorize(scopes.read.profile), async (ctx) => {
 
 v1Router.get("/users/:id", authorize(scopes.read.profile), async (ctx) => {
   console.log(ctx.state.token);
+  const stages = queryTranslator(ctx.request.url.searchParams);
   // ctx.response.body = ctx.state.token;
-  const user = await Users.findOne({ _id: new ObjectId(ctx.params.id) });
+  // const user = await Users.findOne({ _id: new ObjectId(ctx.params.id) });
+  const user = await Users.aggregate([
+    {
+      $match: {
+        _id: new ObjectId(ctx.params.id),
+      },
+    },
+    ...stages,
+  ]).toArray();
 
   if (!user) {
     ctx.response.status = 404;
@@ -53,6 +64,7 @@ v1Router.get("/users/:id", authorize(scopes.read.profile), async (ctx) => {
 
   ctx.response.body = user;
 });
+
 v1Router.get("/friends/@me", authorize(scopes.read.friends), async (ctx) => {
   try {
     console.log(ctx.state.token.userId);
@@ -180,6 +192,37 @@ v1Router.post(
     } catch (e) {
       console.log(e);
       ctx.response.body = { message: "invalid user id" };
+    }
+  }
+);
+
+v1Router.get(
+  "/friend-requests/@me/in",
+  authorize(scopes.read.friends),
+  async (ctx) => {
+    const userId = new ObjectId(ctx.state.token.userId);
+    try {
+      const users = await Users.aggregate([
+        {
+          $match: { _id: userId },
+        },
+        ...populateByIds("users", "inwardFriendRequests"),
+      ]).toArray();
+      console.log(users, "inwardadsfdssdf");
+
+      if (users.length === 0) {
+        ctx.response.status = 404;
+        ctx.response.body = { message: "User not found" };
+        return;
+      }
+      ctx.response.body = {
+        success: true,
+        data: (users[0] as UserSchema).inwardFriendRequests,
+      };
+    } catch (e) {
+      console.log(e, "error incomingsjfads");
+      ctx.response.status = 400;
+      ctx.response.body = { message: "Invalid user ID", error: e };
     }
   }
 );

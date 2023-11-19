@@ -51,7 +51,7 @@ devRouter.post("/app/create", authorize(scopes.dev.admin), async (ctx) => {
 
     const hash = await crypto.subtle.digest(
       "SHA-256",
-      new TextEncoder().encode(crypto.randomUUID()),
+      new TextEncoder().encode(crypto.randomUUID())
     ); // hash the message ')
 
     const clientSecret = toHashString(hash);
@@ -68,7 +68,7 @@ devRouter.post("/app/create", authorize(scopes.dev.admin), async (ctx) => {
 
     const dev = await Devs.updateOne(
       { userId: new ObjectId(ctx.state.token.userId) },
-      { $push: { apps: appId } },
+      { $push: { apps: appId } }
     );
 
     if (!dev || !dev.modifiedCount) {
@@ -126,7 +126,7 @@ devRouter.put("/apps/:id", authorize(scopes.dev.admin), async (ctx) => {
     console.log(result.data, "result data");
     const res = await Apps.updateOne(
       { _id: new ObjectId(ctx.params.id) },
-      { $set: result.data },
+      { $set: result.data }
     );
     if (!res.matchedCount) {
       ctx.response.body = { message: "App not found" };
