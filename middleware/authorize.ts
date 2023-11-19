@@ -9,6 +9,7 @@ export const authorize =
     const token = ctx.request.headers.get("Authorization")?.split(" ")[1];
 
     if (!token) {
+      console.log("no token");
       ctx.response.status = Status.Unauthorized;
       ctx.response.body = {
         message: "Unauthorized - Missing token",

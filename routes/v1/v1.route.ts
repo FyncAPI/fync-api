@@ -53,19 +53,27 @@ v1Router.get("/users/:id", authorize(scopes.read.profile), async (ctx) => {
       },
     },
     ...stages,
+    {
+      $project: {
+        password: 0,
+      },
+    },
   ]).toArray();
 
-  if (!user) {
+  if (!user[0]) {
     ctx.response.status = 404;
     console.log("user not found");
     ctx.response.body = { message: "User not found" };
     return;
   }
 
-  ctx.response.body = user;
+  ctx.response.body = user[0];
 });
 
 v1Router.get("/friends/@me", authorize(scopes.read.friends), async (ctx) => {
+  const friendRequests =
+    ctx.request.url.searchParams.get("friendRequests") === "true";
+
   try {
     console.log(ctx.state.token.userId);
     const users = await Users.aggregate([
@@ -100,19 +108,50 @@ v1Router.get("/friends/@me", authorize(scopes.read.friends), async (ctx) => {
       {
         $group: {
           _id: "$_id",
-          // Include any other fields from the users document you need in your final output
+          inwardFriendRequests: {
+            $push: "inwardFriendRequests",
+          },
+          outwardFriendRequests: {
+            $push: "outwardFriendRequests",
+          },
           friends: {
             $push: "$friends",
           },
         },
       },
+      {
+        $project: {
+          _id: 1,
+          inwardFriendRequests: {
+            $cond: {
+              if: { $eq: [{ $size: "$friends" }, 0] },
+              then: "$inwardFriendRequests",
+              else: [],
+            },
+          },
+          outwardFriendRequests: {
+            $cond: {
+              if: { $eq: [{ $size: "$friends" }, 0] },
+              then: "$outwardFriendRequests",
+              else: [],
+            },
+          },
+          friends: {
+            $cond: {
+              if: { $eq: [{ $size: "$friends" }, 0] },
+              then: "$friends",
+              else: [],
+            },
+          },
+        },
+      },
     ]).toArray();
 
-    console.log(users[0]);
+    console.log(users[0], "users");
 
     ctx.response.body = {
       success: true,
-      data: (users[0] as UserSchema).friends || [],
+      data: (users[0] as UserSchema)?.friends || [],
     };
   } catch (e) {
     console.log(e);
@@ -223,6 +262,73 @@ v1Router.get(
       console.log(e, "error incomingsjfads");
       ctx.response.status = 400;
       ctx.response.body = { message: "Invalid user ID", error: e };
+    }
+  }
+);
+
+v1Router.get(
+  "/friend-requests/@me/out",
+  authorize(scopes.read.friends),
+  async (ctx) => {
+    const userId = new ObjectId(ctx.state.token.userId);
+    try {
+      const users = await Users.aggregate([
+        {
+          $match: { _id: userId },
+        },
+        ...populateByIds("users", "outwardFriendRequests"),
+      ]).toArray();
+      console.log(users, "outwardx");
+
+      if (users.length === 0) {
+        ctx.response.status = 404;
+        ctx.response.body = { message: "User not found" };
+        return;
+      }
+
+      const friendRequests = (users[0] as UserSchema).outwardFriendRequests;
+
+      ctx.response.body = friendRequests || [];
+    } catch (e) {
+      console.log(e);
+      ctx.response.status = 400;
+      ctx.response.body = { message: "Invalid user ID" };
+    }
+  }
+);
+v1Router.get(
+  "/friend-requests/@me",
+  authorize(scopes.read.friends),
+  async (ctx) => {
+    const userId = new ObjectId(ctx.state.token.userId);
+    try {
+      const users = await Users.aggregate([
+        {
+          $match: { _id: userId },
+        },
+        ...populateByIds("users", "outwardFriendRequests"),
+        ...populateByIds("users", "inwardFriendRequests"),
+      ]).toArray();
+      console.log(users, "uus");
+
+      if (users.length === 0) {
+        ctx.response.status = 404;
+        ctx.response.body = { message: "User not found" };
+        return;
+      }
+
+      const outwards = (users[0] as UserSchema).outwardFriendRequests;
+      const inwards = (users[0] as UserSchema).inwardFriendRequests;
+      console.log(outwards, inwards, "outwardx");
+
+      ctx.response.body = {
+        outwardFriendRequests: outwards,
+        inwardFriendRequests: inwards,
+      };
+    } catch (e) {
+      console.log(e);
+      ctx.response.status = 400;
+      ctx.response.body = { message: "Invalid user ID" };
     }
   }
 );

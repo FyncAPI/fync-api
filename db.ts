@@ -45,7 +45,10 @@ export const populateById = (col: string, local: string) => [
 
 export const populateByIds = (collectionName: string, fieldName: string) => [
   {
-    $unwind: "$" + fieldName,
+    $unwind: {
+      path: "$" + collectionName,
+      preserveNullAndEmptyArrays: true,
+    },
   },
   {
     $lookup: {
@@ -53,13 +56,6 @@ export const populateByIds = (collectionName: string, fieldName: string) => [
       localField: fieldName,
       foreignField: "_id",
       as: fieldName,
-    },
-  },
-  {
-    $group: {
-      _id: "$_id",
-      [fieldName]: { $push: { $arrayElemAt: [`$${fieldName}`, 0] } },
-      // use $arrayElemAt to get the first element of the array returned by the lookup
     },
   },
 ];
