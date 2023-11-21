@@ -282,46 +282,15 @@ v1Router.get("/friends/@me", authorize(scopes.read.friends), async (ctx) => {
       {
         $group: {
           _id: "$_id",
-          inwardFriendRequests: {
-            $push: "inwardFriendRequests",
-          },
-          outwardFriendRequests: {
-            $push: "outwardFriendRequests",
-          },
+          // Include any other fields from the users document you need in your final output
           friends: {
             $push: "$friends",
           },
         },
       },
-      {
-        $project: {
-          _id: 1,
-          inwardFriendRequests: {
-            $cond: {
-              if: { $eq: [{ $size: "$friends" }, 0] },
-              then: "$inwardFriendRequests",
-              else: [],
-            },
-          },
-          outwardFriendRequests: {
-            $cond: {
-              if: { $eq: [{ $size: "$friends" }, 0] },
-              then: "$outwardFriendRequests",
-              else: [],
-            },
-          },
-          friends: {
-            $cond: {
-              if: { $eq: [{ $size: "$friends" }, 0] },
-              then: "$friends",
-              else: [],
-            },
-          },
-        },
-      },
     ]).toArray();
 
-    console.log(users[0], "users");
+    console.log(users[0]?.friends, "fr");
 
     ctx.response.body = {
       success: true,
@@ -334,21 +303,17 @@ v1Router.get("/friends/@me", authorize(scopes.read.friends), async (ctx) => {
   }
 });
 v1Router.post(
-  "/:id/accept-friend",
+  "/accept-friend/:id",
   authorize(scopes.write.friends),
   async (ctx) => {
-    /**
-     * 1. check if the user exists
-     * 2. create friendship document
-     * 3. remove the friend from the user's outwardFriendRequests
-     * 4. add the friend to the user's friends
-     * 5. remove the user from the friend's inwardFriendRequests
-     * 6. add the user to the friend's friends
-     */
+    // ctx.response.status = 208;
+    // ctx.response.body = { message: "accept friend" };
+    // return;
     try {
       const friendId = new ObjectId(ctx.params.id);
       const userId = new ObjectId(ctx.state.token.userId);
 
+      console.log(userId, friendId, "user accept friend");
       const user = await Users.findOne({ _id: userId });
       console.log(user, "user accept friend");
 

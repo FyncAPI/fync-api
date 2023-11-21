@@ -29,26 +29,31 @@ AccessTokens.createIndexes({
 });
 
 export const createAccessToken = async (userId: string, code?: string) => {
-  const accessToken =
-    Deno.env.get("ENV") == "dev"
-      ? await bcrypt.hash(code || userId.toString(), await bcrypt.genSalt(10))
-      : bcrypt.hashSync(code || userId, bcrypt.genSaltSync(10));
+  try {
+    const accessToken =
+      Deno.env.get("ENV") == "dev"
+        ? await bcrypt.hash(code || userId.toString(), await bcrypt.genSalt(10))
+        : bcrypt.hashSync(code || userId, bcrypt.genSaltSync(10));
 
-  const tokenId = await AccessTokens.insertOne({
-    accessToken,
-    tokenType: "Bearer",
-    clientId: "",
-    userId,
-    expireAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5),
-    scopes: [
-      scopes.read.friends,
-      scopes.read.profile,
-      scopes.read.posts,
-      scopes.write.friendship,
-      scopes.write.apps,
-      scopes.write.friends,
-    ],
-  });
+    const tokenId = await AccessTokens.insertOne({
+      accessToken,
+      tokenType: "Bearer",
+      clientId: "",
+      userId,
+      expireAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5),
+      scopes: [
+        scopes.read.friends,
+        scopes.read.profile,
+        scopes.read.posts,
+        scopes.write.friendship,
+        scopes.write.apps,
+        scopes.write.friends,
+      ],
+    });
 
-  return tokenId;
+    return accessToken;
+  } catch (error) {
+    console.log(error);
+    return null;
+  }
 };
