@@ -240,31 +240,6 @@ usersRouter
       ctx.response.body = { message: "Invalid user ID" };
     }
   })
-  .get("/:id/friend-requests/out", async (ctx) => {
-    try {
-      const users = await Users.aggregate([
-        {
-          $match: { _id: new ObjectId(ctx.params.id) },
-        },
-        ...populateByIds("users", "outwardFriendRequests"),
-      ]).toArray();
-      console.log(users, "outwardx");
-
-      if (users.length === 0) {
-        ctx.response.status = 404;
-        ctx.response.body = { message: "User not found" };
-        return;
-      }
-
-      const friendRequests = (users[0] as UserSchema).outwardFriendRequests;
-
-      ctx.response.body = friendRequests || [];
-    } catch (e) {
-      console.log(e);
-      ctx.response.status = 400;
-      ctx.response.body = { message: "Invalid user ID" };
-    }
-  })
   .get("/:id/friend-requests/declined", async (ctx) => {
     try {
       const users = await Users.aggregate([

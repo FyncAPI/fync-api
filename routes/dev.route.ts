@@ -36,7 +36,6 @@ devRouter.get("/profile", authorize(scopes.dev.admin), async (ctx) => {
 devRouter.post("/app/create", authorize(scopes.dev.admin), async (ctx) => {
   // get auth header from request
   const body = await ctx.request.body({ type: "json" }).value;
-  body._id = new ObjectId(ctx.params.id);
   console.log(body);
 
   const result = createAppParser.safeParse(body);
@@ -137,3 +136,13 @@ devRouter.put("/apps/:id", authorize(scopes.dev.admin), async (ctx) => {
     ctx.response.body = app;
   }
 });
+
+// to use the interaction.... /v1/appid/interactionname?
+devRouter.post(
+  "/interactions/create",
+  authorize(scopes.dev.admin),
+  async (ctx) => {
+    const body = await ctx.request.body({ type: "json" }).value;
+    console.log(body);
+  }
+);
