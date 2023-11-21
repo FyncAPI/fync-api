@@ -29,8 +29,9 @@ export const v1Router = new Router();
 
 v1Router.get("/users/@me", authorize(scopes.read.profile), async (ctx) => {
   console.log(ctx.state.token);
+  const userId = new ObjectId(ctx.state.token.userId);
   // ctx.response.body = ctx.state.token;
-  const user = await Users.findOne({ _id: ctx.state.token.userId });
+  const user = await Users.findOne({ _id: userId });
 
   if (!user) {
     ctx.response.status = 404;
@@ -44,8 +45,6 @@ v1Router.get("/users/@me", authorize(scopes.read.profile), async (ctx) => {
 v1Router.get("/users/:id", authorize(scopes.read.profile), async (ctx) => {
   console.log(ctx.state.token);
   const stages = queryTranslator(ctx.request.url.searchParams);
-  // ctx.response.body = ctx.state.token;
-  // const user = await Users.findOne({ _id: new ObjectId(ctx.params.id) });
   const user = await Users.aggregate([
     {
       $match: {
@@ -66,6 +65,7 @@ v1Router.get("/users/:id", authorize(scopes.read.profile), async (ctx) => {
     ctx.response.body = { message: "User not found" };
     return;
   }
+  console.log(user[0]);
 
   ctx.response.body = user[0];
 });

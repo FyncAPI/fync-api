@@ -18,6 +18,7 @@ export const authorize =
     }
 
     const dbToken = await AccessTokens.findOne({ accessToken: token });
+    console.log(dbToken, "dbToken");
 
     if (!dbToken) {
       ctx.response.status = Status.Unauthorized;
