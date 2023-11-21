@@ -43,9 +43,6 @@ export const userParser = z.object({
   declinedFriendRequests: z
     .array(z.instanceof(ObjectId).or(z.string()))
     .optional(),
-  canceledFriendRequests: z
-    .array(z.instanceof(ObjectId).or(z.string()))
-    .optional(),
 
   email: z.string(),
   password: z.string().optional(),

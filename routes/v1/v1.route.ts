@@ -418,13 +418,16 @@ v1Router.post(
       // Remove friend from user's inwardFriendRequests
       await Users.updateOne(
         { _id: user._id },
-        { $pull: { inwardFriendRequests: friend._id } }
+        {
+          $pull: { inwardFriendRequests: friend._id },
+          $addToSet: { declinedFriendRequests: user._id },
+        }
       );
 
       await Users.updateOne(
         { _id: friend._id },
         {
-          $pull: { outwardFriendRequests: user._id }
+          $pull: { outwardFriendRequests: user._id },
         }
       );
 
@@ -473,7 +476,7 @@ v1Router.post(
         {
           $pull: { inwardFriendRequests: user._id },
         }
-      )
+      );
 
       ctx.response.body = {
         success: true,
