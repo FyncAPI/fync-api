@@ -8,6 +8,7 @@ import { ObjectId } from "mongo";
 import { validateAddFriendRequest } from "@/utils/friend.ts";
 import { populateByIds } from "@/db.ts";
 import { queryTranslator } from "@/utils/user.ts";
+import { v1 } from "std/uuid/mod.ts";
 
 export const v1Router = new Router();
 
@@ -417,20 +418,69 @@ v1Router.post(
       // Remove friend from user's inwardFriendRequests
       await Users.updateOne(
         { _id: user._id },
-        { $pull: { inwardFriendRequests: friend._id } }
+        {
+          $pull: { inwardFriendRequests: friend._id },
+          $addToSet: { declinedFriendRequests: user._id },
+        }
       );
 
       await Users.updateOne(
         { _id: friend._id },
         {
           $pull: { outwardFriendRequests: user._id },
-          $addToSet: { declinedFriendRequests: user._id },
         }
       );
 
       ctx.response.body = {
         success: true,
         message: "friend request declined",
+      };
+    } catch (e) {
+      console.log(e);
+      ctx.response.body = { message: "invalid user id" };
+    }
+  }
+);
+v1Router.post(
+  "/:id/cancel-friend",
+  authorize(scopes.write.friends),
+  async (ctx) => {
+    try {
+      const friendId = new ObjectId(ctx.params.id);
+      const userId = new ObjectId(ctx.state.token.userId);
+
+      const user = await Users.findOne({ _id: userId });
+
+      if (!user) {
+        ctx.response.body = { message: "invalid user id" };
+        return;
+      }
+
+      const friend = await Users.findOne({
+        _id: friendId,
+      });
+
+      if (!friend) {
+        ctx.response.body = { message: "invalid friend id" };
+        return;
+      }
+
+      // Remove friend from user's outwardFriendRequests
+      await Users.updateOne(
+        { _id: user._id },
+        { $pull: { outwardFriendRequests: friend._id } }
+      );
+
+      await Users.updateOne(
+        { _id: friend._id },
+        {
+          $pull: { inwardFriendRequests: user._id },
+        }
+      );
+
+      ctx.response.body = {
+        success: true,
+        message: "friend request canceled",
       };
     } catch (e) {
       console.log(e);
