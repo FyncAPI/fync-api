@@ -14,7 +14,7 @@ export function validateAddFriendRequest(
     return { valid: false, message: "Invalid friend ID" };
   }
 
-  if (user._id === new ObjectId(friendId)) {
+  if (user._id.toString() === friendId) {
     return {
       valid: false,
       message: "User ID and friend ID cannot be the same",
