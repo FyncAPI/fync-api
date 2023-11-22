@@ -4,6 +4,7 @@ export const scopes = {
     // email: "read:email",
     friends: "friends.read",
     posts: "posts.read",
+    interaction: "interaction.read",
   },
   write: {
     // profile: "should",
@@ -11,6 +12,7 @@ export const scopes = {
     friends: "friends.write",
     apps: "apps.write",
     friendship: "friendship.write",
+    interaction: "interaction.write",
   },
   dev: {
     admin: "dev:admin",

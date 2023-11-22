@@ -11,6 +11,7 @@ export const friendshipParser = z.object({
   removed: z.boolean().optional(),
 
   friendship: z.number(),
+  interactions: z.array(z.instanceof(ObjectId).or(z.string())),
 
   images: z.array(z.string()),
   videos: z.array(z.string()),
