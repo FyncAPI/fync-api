@@ -117,7 +117,6 @@ v1Router.post(
         return;
       }
 
-
       // update the user.outwardFriendRequests to push the friend id
       await Users.updateOne(
         { _id: userId },
@@ -179,36 +178,6 @@ v1Router.get(
   }
 );
 
-// v1Router.get(
-//   "/friend-requests/@me/out",
-//   authorize(scopes.read.friends),
-//   async (ctx) => {
-//     const userId = new ObjectId(ctx.state.token.userId);
-//     try {
-//       const users = await Users.aggregate([
-//         {
-//           $match: { _id: userId },
-//         },
-//         ...populateByIds("users", "outwardFriendRequests"),
-//       ]).toArray();
-//       console.log(users, "outwardx");
-
-//       if (users.length === 0) {
-//         ctx.response.status = 404;
-//         ctx.response.body = { message: "User not found" };
-//         return;
-//       }
-
-//       const friendRequests = (users[0] as UserSchema).outwardFriendRequests;
-
-//       ctx.response.body = friendRequests || [];
-//     } catch (e) {
-//       console.log(e);
-//       ctx.response.status = 400;
-//       ctx.response.body = { message: "Invalid user ID" };
-//     }
-//   }
-// );
 v1Router.get(
   "/friend-requests/@me",
   authorize(scopes.read.friends),
@@ -305,7 +274,7 @@ v1Router.get("/friends/@me", authorize(scopes.read.friends), async (ctx) => {
   }
 });
 v1Router.post(
-  "/accept-friend/:id",
+  "/:id/accept-friend",
   authorize(scopes.write.friends),
   async (ctx) => {
     // ctx.response.status = 208;
