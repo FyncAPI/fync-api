@@ -99,14 +99,6 @@ v1Router.post(
       const friendId = ctx.params.id;
       const user = await Users.findOne({ _id: userId });
 
-      const { valid, message } = validateAddFriendRequest(user, friendId);
-
-      if (!valid) {
-        ctx.response.status = 400;
-        ctx.response.body = { message };
-        return;
-      }
-
       const friend = await Users.findOne({
         _id: new ObjectId(friendId),
       });
@@ -116,6 +108,15 @@ v1Router.post(
         ctx.response.body = { message: "friend not found" };
         return;
       }
+
+      const { valid, message } = validateAddFriendRequest(user, friendId);
+
+      if (!valid) {
+        ctx.response.status = 400;
+        ctx.response.body = { message };
+        return;
+      }
+
 
       // update the user.outwardFriendRequests to push the friend id
       await Users.updateOne(
