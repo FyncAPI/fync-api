@@ -113,7 +113,7 @@ devRouter.put("/apps/:id", authorize(scopes.dev.admin), async (ctx) => {
   console.log("here");
   const body = await ctx.request.body({ type: "json" }).value;
 
-  console.log(body);
+  console.log(body, "bdd");
   const result = appParser.partial().safeParse(body);
   console.log(result, "updating app");
 
