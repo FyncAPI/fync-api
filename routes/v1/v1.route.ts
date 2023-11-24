@@ -9,6 +9,7 @@ import { validateAddFriendRequest } from "@/utils/friend.ts";
 import { populateByIds } from "@/db.ts";
 import { queryTranslator } from "@/utils/user.ts";
 import { v1 } from "std/uuid/mod.ts";
+import { AuthCodes } from "@/models/authCode.model.ts";
 
 export const v1Router = new Router();
 
@@ -90,6 +91,38 @@ v1Router.get("/users", async (ctx) => {
   ctx.response.body = users || [];
 });
 
+v1Router.post("/auth/flow/discord/:cid", async (ctx) => {
+  const clientId = ctx.params.cid;
+  const body = await ctx.request.body({ type: "json" }).value;
+  // email: profile.email,
+  // discordId: profile.id,
+  // username: profile.username,
+  // name: profile.global_name || "",
+  // profilePicture:
+  //   `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png`,
+
+  const user = await Users.findOne({
+    $or: [{ email: body.email }, { discordId: body.discordId }],
+  });
+
+  if (user) {
+    // do the auth and send back code
+    const authCodeId = await AuthCodes.insertOne({
+      clientId,
+      userId: user._id,
+      expireAt: new Date(Date.now() + 1000 * 60 * 10),
+      scopes: body.scopes,
+      used: false,
+    });
+
+    ctx.response.body = {
+      success: true,
+      data: {
+        code: authCodeId,
+      },
+    };
+  }
+});
 v1Router.post(
   "/users/:id/add-friend",
   authorize(scopes.write.friends),
