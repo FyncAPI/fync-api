@@ -13,9 +13,7 @@ import { ObjectId } from "mongo";
 import { validateAddFriendRequest } from "@/utils/friend.ts";
 import { populateByIds } from "@/db.ts";
 import { queryTranslator } from "@/utils/user.ts";
-import { z } from "zod";
 import { AuthCodes } from "@/models/authCode.model.ts";
-import { AppUsers } from "@/models/appUser.model.ts";
 
 export const v1Router = new Router();
 
