@@ -3,7 +3,10 @@ import { authorize } from "@/middleware/authorize.ts";
 import { scopes } from "@/utils/scope.ts";
 import { UserSchema, Users } from "@/models/user.model.ts";
 import { Apps } from "../../models/app.model.ts";
-import { InteractionSchema, Interactions } from "../../models/interaction.model.ts";
+import {
+  InteractionSchema,
+  Interactions,
+} from "../../models/interaction.model.ts";
 import { matchId, populateArray } from "@/utils/db.ts";
 import { Friendships } from "@/models/friendship.model.ts";
 import { ObjectId } from "mongo";
@@ -12,6 +15,7 @@ import { populateByIds } from "@/db.ts";
 import { queryTranslator } from "@/utils/user.ts";
 import { v1 } from "std/uuid/mod.ts";
 import { z } from "zod";
+import { AuthCodes } from "@/models/authCode.model.ts";
 
 export const v1Router = new Router();
 
@@ -93,6 +97,38 @@ v1Router.get("/users", async (ctx) => {
   ctx.response.body = users || [];
 });
 
+v1Router.post("/auth/flow/discord/:cid", async (ctx) => {
+  const clientId = ctx.params.cid;
+  const body = await ctx.request.body({ type: "json" }).value;
+  // email: profile.email,
+  // discordId: profile.id,
+  // username: profile.username,
+  // name: profile.global_name || "",
+  // profilePicture:
+  //   `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png`,
+
+  const user = await Users.findOne({
+    $or: [{ email: body.email }, { discordId: body.discordId }],
+  });
+
+  if (user) {
+    // do the auth and send back code
+    const authCodeId = await AuthCodes.insertOne({
+      clientId,
+      userId: user._id,
+      expireAt: new Date(Date.now() + 1000 * 60 * 10),
+      scopes: body.scopes,
+      used: false,
+    });
+
+    ctx.response.body = {
+      success: true,
+      data: {
+        code: authCodeId,
+      },
+    };
+  }
+});
 v1Router.post(
   "/users/:id/add-friend",
   authorize(scopes.write.friends),
@@ -490,9 +526,9 @@ v1Router.post(
 
         startDate: new Date(),
         endDate: new Date(),
-        createdAt: new Date()
+        createdAt: new Date(),
       });
-      console.log("created interaction", interaction._id)
+      console.log("created interaction", interaction._id);
 
       await Apps.updateOne(
         {
@@ -502,8 +538,8 @@ v1Router.post(
           $addToSet: {
             interaction: {
               _id: interaction,
-              rarity: 1
-            }
+              rarity: 1,
+            },
           },
         }
       );
@@ -525,9 +561,11 @@ v1Router.get(
     try {
       const app_id = new ObjectId(ctx.params.id);
 
-      const interactions = await Interactions.aggregate([{
-        $match: {app: app_id}
-      }]).toArray();
+      const interactions = await Interactions.aggregate([
+        {
+          $match: { app: app_id },
+        },
+      ]).toArray();
 
       console.log("interactions", interactions);
 

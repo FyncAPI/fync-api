@@ -47,6 +47,7 @@ export const appParser = z.object({
   discordClientId: z.string().optional(),
   discordClientSecret: z.string().optional(),
   discordRedirectUri: z.string().optional(),
+  discordScopes: z.array(z.string()).optional(),
 
   appStoreId: z.string().optional(),
   androidPackageName: z.string().optional(),
