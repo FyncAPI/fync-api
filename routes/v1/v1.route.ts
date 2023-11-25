@@ -150,7 +150,6 @@ v1Router.post("/auth/flow/discord/:cid", async (ctx) => {
       app: new ObjectId(app!._id),
       fyncId: userId,
       friends: [],
-
       createdAt: new Date(),
     });
 
