@@ -214,11 +214,11 @@ authRouter.post("/email/check", async (ctx) => {
   return;
 });
 
-authRouter.post("/email/verify", async (ctx) => {
-  const body = await ctx.request.body({ type: "json" }).value;
+// authRouter.post("/email/verify", async (ctx) => {
+//   const body = await ctx.request.body({ type: "json" }).value;
 
-  const { email, code } = body.value;
-});
+//   const { email, code } = body.value;
+// });
 
 authRouter.post(
   "/authorize",

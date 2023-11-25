@@ -54,14 +54,7 @@ router.use("/me", meRouter.routes());
 router.use("/friendships", friendshipRouter.routes());
 
 router.use("/v1", v1Router.routes());
-// router.get("/x", async (ctx) => {
-//   const accessToken =
-//     Deno.env.get("ENV") == "dev"
-//       ? await bcrypt.hash("test", await bcrypt.genSalt(10))
-//       : bcrypt.hashSync("testets", bcrypt.genSaltSync(10));
 
-//   ctx.response.body = { accessToken };
-// });
 router.get("/setup", async (ctx) => {
   // check if db is empty
   const appCount = await Apps.countDocuments();
