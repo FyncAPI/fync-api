@@ -57,11 +57,17 @@ router.use("/v1", v1Router.routes());
 
 router.get("/setup", async (ctx) => {
   // check if db is empty
-  const appCount = await Apps.countDocuments();
-  if (appCount > 0) {
-    ctx.response.body = { error: "Apps already exist" };
+  const fyncApp = await Apps.findOne({ name: "Fync" });
+
+  if (fyncApp) {
+    ctx.response.body = { error: "Fync app already exists" };
     return;
   }
+  // const appCount = await Apps.countDocuments();
+  // if (appCount > 0) {
+  //   ctx.response.body = { error: "Apps already exist" };
+  //   return;
+  // }
   // create app in db as fync
   const clientId = crypto.randomUUID();
 

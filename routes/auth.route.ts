@@ -1,6 +1,7 @@
 import { Router } from "oak";
 import * as bcrypt from "bcrypt";
 import {
+  createDiscordUserParser,
   createEmailUserParser,
   createUserParser,
   Users,
@@ -44,12 +45,12 @@ authRouter.post("/email/register", async (ctx) => {
   });
   const file = body.files?.[0];
 
-  if (!file || !file.content) {
-    ctx.response.body = {
-      error: "No pfp",
-    };
-    return;
-  }
+  // if (!file || !file.content) {
+  //   ctx.response.body = {
+  //     error: "No pfp",
+  //   };
+  //   return;
+  // }
 
   const result = createEmailUserParser.safeParse(body.fields);
 
@@ -126,7 +127,7 @@ authRouter.post("/email/register", async (ctx) => {
       createdAt: new Date(),
     };
 
-    const accessToken = await createAccessToken(userId);
+    const accessToken = await createAccessToken(userId.toString());
 
     ctx.response.body = {
       message: "User created",
@@ -169,7 +170,7 @@ authRouter.post("/email", async (ctx) => {
   const accessToken =
     Deno.env.get("ENV") == "dev"
       ? await bcrypt.hash(userData._id.toString(), await bcrypt.genSalt(10))
-      : bcrypt.hashSync(userData._id, bcrypt.genSaltSync(10));
+      : bcrypt.hashSync(userData._id.toString(), bcrypt.genSaltSync(10));
 
   const tokenId = await AccessTokens.insertOne({
     accessToken,
@@ -212,6 +213,117 @@ authRouter.post("/email/check", async (ctx) => {
   };
 
   return;
+});
+
+authRouter.post("/discord", async (ctx) => {
+  const body = await ctx.request.body({ type: "json" }).value;
+  const headers = ctx.request.headers;
+
+  const client_id = atob(
+    headers.get("Authorization")?.split(" ")[1] || ""
+  ).split(":")[0];
+  const client_secret = atob(
+    headers.get("Authorization")?.split(" ")[1] || ""
+  ).split(":")[1];
+
+  const app = await Apps.findOne({
+    clientId: client_id,
+    clientSecret: client_secret,
+  });
+
+  if (!app) {
+    ctx.response.body = {
+      error: "App not found",
+    };
+    return;
+  }
+  // check if user exists
+  const user = await Users.findOne({
+    $or: [{ email: body.email }, { discordId: body.id }],
+  });
+  if (user) {
+    console.log(user, body, "uuu");
+    if (!user.discordId) {
+      console.log("no discord id");
+      await Users.updateOne(
+        { _id: user._id },
+        { $set: { discordId: body.discordId } }
+      );
+    }
+    // do the auth and send back code
+    const accessToken = await createAccessToken(user._id.toString());
+    ctx.response.status = 200;
+    ctx.response.body = {
+      user,
+      accessToken,
+    };
+  } else {
+    ctx.response.status = 204;
+  }
+  // if not create user
+
+  // return user with token
+});
+
+// form data
+// {
+//   "id": "1234567890",
+// }
+authRouter.post("/discord/register", async (ctx) => {
+  const form = ctx.request.body({ type: "form-data" }).value;
+  const body = await form.read({
+    maxSize: 10000000,
+  });
+  const file = body.files?.[0];
+  console.log(body.fields, "result");
+  const discordProfileImage = `https://cdn.discordapp.com/avatars/${body.fields.id}/${body.fields.avatar}.png`;
+  const result = createDiscordUserParser.safeParse(body.fields);
+
+  if (!result.success) {
+    const error = result.error.flatten();
+    console.log(error);
+    ctx.response.body = error;
+  } else {
+    // create user
+    const user = result.data;
+    console.log(discordProfileImage);
+
+    const userId = await Users.insertOne({
+      ...user,
+      profilePicture: discordProfileImage,
+      provider: ["discord"],
+      apps: [],
+      appUsers: [],
+      friends: [],
+      verified: false,
+      createdAt: new Date(),
+    });
+    if (file) {
+      const profilePic = new File([file.content], file.filename || "zry", {
+        type: file.contentType,
+      });
+
+      const optimizedPfp = await optimizeImage(profilePic);
+
+      const imgUrl = await UploadFile(
+        optimizedPfp,
+        "prof" + body.fields.name + Date.now()
+      );
+
+      await Users.updateOne(
+        { _id: new ObjectId(userId) },
+        { $set: { profilePicture: imgUrl } }
+      );
+    }
+    const accessToken = await createAccessToken(userId.toString());
+
+    const newUser = await Users.findOne({ _id: new ObjectId(userId) });
+    ctx.response.body = {
+      message: "User created",
+      user: newUser,
+      accessToken,
+    };
+  }
 });
 
 // authRouter.post("/email/verify", async (ctx) => {

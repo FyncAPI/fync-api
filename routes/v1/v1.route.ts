@@ -13,10 +13,8 @@ import { ObjectId } from "mongo";
 import { validateAddFriendRequest } from "@/utils/friend.ts";
 import { populateByIds } from "@/db.ts";
 import { queryTranslator } from "@/utils/user.ts";
-import { v1 } from "std/uuid/mod.ts";
 import { z } from "zod";
 import { AuthCodes } from "@/models/authCode.model.ts";
-import { Apps } from "@/models/app.model.ts";
 import { AppUsers } from "@/models/appUser.model.ts";
 
 export const v1Router = new Router();
@@ -153,11 +151,7 @@ v1Router.post("/auth/flow/discord/:cid", async (ctx) => {
       app: new ObjectId(app!._id),
       fyncId: userId,
       friends: [],
-      appInteraction: {
-        friendshipCount: 0,
-        eventCount: 0,
-        lastInteraction: new Date(),
-      },
+
       createdAt: new Date(),
     });
 
