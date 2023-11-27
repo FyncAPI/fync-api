@@ -18,7 +18,6 @@ export const authorize =
     }
 
     const dbToken = await AccessTokens.findOne({ accessToken: token });
-    console.log(dbToken, "dbToken");
 
     if (!dbToken) {
       ctx.response.status = Status.Unauthorized;
@@ -27,6 +26,9 @@ export const authorize =
       };
       return;
     }
+
+    /*console.log("dbToken", dbToken.accessToken);
+    console.log("dbToken", dbToken.scopes);*/
 
     if (!dbToken.scopes.includes(scope)) {
       ctx.response.status = Status.Unauthorized;

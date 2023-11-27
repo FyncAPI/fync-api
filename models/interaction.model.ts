@@ -8,6 +8,7 @@ export const interactionParser = z.object({
   _id: z.instanceof(ObjectId).or(z.string()),
   version: z.number(),
   app: z.instanceof(ObjectId).or(z.string()),
+  usersId: z.array(z.instanceof(ObjectId).or(z.string())),
   title: z.string(),
   description: z.string(),
   rewardDetail: z.string(),
