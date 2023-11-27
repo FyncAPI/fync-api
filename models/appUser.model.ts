@@ -7,7 +7,7 @@ export const appUserParser = z.object({
   app: z.instanceof(ObjectId).or(z.string()),
 
   fyncId: z.instanceof(ObjectId).or(z.string()),
-  appUserId: z.string(),
+  appUserId: z.string().optional(),
   friends: z.array(z.instanceof(ObjectId).or(z.string())),
 
   createdAt: z.date(),

@@ -11,7 +11,6 @@ import { validateAddFriendRequest } from "@/utils/friend.ts";
 import { populateByIds } from "@/db.ts";
 import { queryTranslator } from "@/utils/user.ts";
 import { v1 } from "std/uuid/mod.ts";
-import { z } from "zod";
 
 export const v1Router = new Router();
 
@@ -93,6 +92,86 @@ v1Router.get("/users", async (ctx) => {
   ctx.response.body = users || [];
 });
 
+v1Router.post("/auth/flow/discord/:cid", async (ctx) => {
+  const clientId = ctx.params.cid;
+  const body = await ctx.request.body({ type: "json" }).value;
+  // email: profile.email,
+  // discordId: profile.id,
+  // username: profile.username,
+  // name: profile.global_name || "",
+  // profilePicture:
+  //   `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png`,
+
+  const app = await Apps.findOne({ clientId: clientId });
+  if (!app) {
+    ctx.response.status = 404;
+    ctx.response.body = { message: "App not found" };
+    return;
+  }
+  const user = await Users.findOne({
+    $or: [{ email: body.email }, { discordId: body.discordId }],
+  });
+
+  if (user) {
+    // do the auth and send back code
+    const authCodeId = await AuthCodes.insertOne({
+      clientId,
+      userId: user._id,
+      expireAt: new Date(Date.now() + 1000 * 60 * 10),
+      scopes: body.scopes,
+      used: false,
+    });
+
+    ctx.response.body = {
+      code: authCodeId,
+    };
+  } else {
+    const userId = await Users.insertOne({
+      email: body.email,
+      discordId: body.discordId,
+      username: body.username,
+      name: body.name,
+      profilePicture: body.profilePicture,
+      createdAt: new Date(),
+      apps: [new ObjectId(app!._id)],
+      friends: [],
+      outwardFriendRequests: [],
+      inwardFriendRequests: [],
+      declinedFriendRequests: [],
+      appUsers: [],
+      verified: false,
+    });
+
+    const appUser = await AppUsers.insertOne({
+      app: new ObjectId(app!._id),
+      fyncId: userId,
+      friends: [],
+      appInteraction: {
+        friendshipCount: 0,
+        eventCount: 0,
+        lastInteraction: new Date(),
+      },
+      createdAt: new Date(),
+    });
+
+    const updatedUser = await Users.updateOne(
+      { _id: userId },
+      { $push: { appUsers: appUser } }
+    );
+
+    const authCodeId = await AuthCodes.insertOne({
+      clientId,
+      userId: userId,
+      expireAt: new Date(Date.now() + 1000 * 60 * 10),
+      scopes: body.scopes,
+      used: false,
+    });
+
+    ctx.response.body = {
+      code: authCodeId,
+    };
+  }
+});
 v1Router.post(
   "/users/:id/add-friend",
   authorize(scopes.write.friends),

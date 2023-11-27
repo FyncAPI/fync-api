@@ -19,6 +19,7 @@ export const userParser = z.object({
   _id: z.instanceof(ObjectId).or(z.string()),
   provider: z.array(z.enum(["google", "facebook", "email"])).optional(),
   devId: z.instanceof(ObjectId).or(z.string()).optional(),
+  discordId: z.string().optional(),
 
   username: z.string(),
   name: z.string(),
@@ -68,6 +69,17 @@ export const userParser = z.object({
 });
 
 export type UserSchema = z.infer<typeof userParser>;
+
+export const createDiscordUserParser = userParser.pick({
+  username: true,
+  name: true,
+  email: true,
+  discordId: true,
+  birthdate: true,
+  profilePicture: true,
+});
+export type CreateDiscordUserSchema = z.infer<typeof createUserParser>;
+
 export const createUserParser = userParser.pick({
   username: true,
   name: true,
@@ -77,7 +89,6 @@ export const createUserParser = userParser.pick({
   phoneNumber: true,
   profilePicture: true,
 });
-
 export type CreateUserSchema = z.infer<typeof createUserParser>;
 
 export const createEmailUserParser = z.object({
