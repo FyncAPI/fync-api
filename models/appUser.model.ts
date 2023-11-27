@@ -10,11 +10,6 @@ export const appUserParser = z.object({
   appUserId: z.string().optional(),
   friends: z.array(z.instanceof(ObjectId).or(z.string())),
 
-  appInteraction: z.object({
-    friendshipCount: z.number(),
-    eventCount: z.number(),
-    lastInteraction: z.date(),
-  }),
   createdAt: z.date(),
 });
 

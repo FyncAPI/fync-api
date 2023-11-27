@@ -2,6 +2,8 @@ import { Router } from "oak/mod.ts";
 import { authorize } from "@/middleware/authorize.ts";
 import { scopes } from "@/utils/scope.ts";
 import { UserSchema, Users } from "@/models/user.model.ts";
+import { Apps } from "../../models/app.model.ts";
+import { InteractionSchema, Interactions } from "../../models/interaction.model.ts";
 import { matchId, populateArray } from "@/utils/db.ts";
 import { Friendships } from "@/models/friendship.model.ts";
 import { ObjectId } from "mongo";
@@ -9,9 +11,6 @@ import { validateAddFriendRequest } from "@/utils/friend.ts";
 import { populateByIds } from "@/db.ts";
 import { queryTranslator } from "@/utils/user.ts";
 import { v1 } from "std/uuid/mod.ts";
-import { AuthCodes } from "@/models/authCode.model.ts";
-import { Apps } from "@/models/app.model.ts";
-import { AppUsers } from "@/models/appUser.model.ts";
 
 export const v1Router = new Router();
 
@@ -402,6 +401,7 @@ v1Router.post(
         accepter: user._id,
         adder: friend._id,
         friendship: 0,
+        interactions: [],
         images: [],
         videos: [],
 
@@ -541,3 +541,148 @@ v1Router.post(
     }
   }
 );
+v1Router.post(
+  "/apps/:id/create-interaction",
+  authorize(scopes.write.interaction),
+  async (ctx) => {
+    try {
+      const app_id = new ObjectId(ctx.params.id);
+
+      const app = await Apps.findOne({
+        _id: app_id,
+      });
+
+      if (!app) {
+        ctx.response.body = { message: "invalid app id" };
+        return;
+      }
+
+      const interaction = await Interactions.insertOne({
+        version: 1,
+        app: app._id,
+        title: "",
+        description: "",
+        rewardDetail: "",
+
+        type: "friendship",
+        options: [],
+
+        startDate: new Date(),
+        endDate: new Date(),
+        createdAt: new Date()
+      });
+      console.log("created interaction", interaction._id)
+
+      await Apps.updateOne(
+        {
+          _id: app_id,
+        },
+        {
+          $addToSet: {
+            interaction: {
+              _id: interaction,
+              rarity: 1
+            }
+          },
+        }
+      );
+
+      ctx.response.body = {
+        success: true,
+        message: "Success",
+      };
+    } catch (e) {
+      console.log(e);
+      ctx.response.body = { message: "invalid app id" };
+    }
+  }
+);
+v1Router.get(
+  "/apps/:id/interactions",
+  authorize(scopes.read.interaction),
+  async (ctx) => {
+    try {
+      const app_id = new ObjectId(ctx.params.id);
+
+      const interactions = await Interactions.aggregate([{
+        $match: {app: app_id}
+      }]).toArray();
+
+      console.log("interactions", interactions);
+
+      ctx.response.body = {
+        success: true,
+        data: interactions as InteractionSchema[],
+      };
+    } catch (e) {
+      console.log(e);
+      ctx.response.body = { message: "invalid app id" };
+    }
+  }
+);
+/*v1Router.post(
+  "/apps/:app_id/add-interaction/:interaction_id/to/:friend_id",
+  authorize(scopes.write.interaction),
+  async (ctx) => {
+    try {
+      const app_id = new ObjectId(ctx.params.app_id);
+      const interaction_id = new ObjectId(ctx.params.interaction_id);
+      const user_id = new ObjectId(ctx.state.token.userId);
+      const friend_id = new ObjectId(ctx.params.friend_id);
+
+      const app = await Apps.findOne({
+        _id: app_id,
+      });
+
+      if (!app) {
+        ctx.response.body = { message: "invalid app id" };
+        return;
+      }
+
+      const interaction = await Interactions.findOne({
+        _id: interaction_id,
+      });
+
+      if (!interaction) {
+        ctx.response.body = { message: "invalid interaction id" };
+        return;
+      }
+
+      const user = await Users.findOne({ _id: user_id });
+
+      if (!user) {
+        ctx.response.body = { message: "invalid user id" };
+        return;
+      }
+
+      const friend = await Users.findOne({ _id: friend_id });
+
+      if (!friend) {
+        ctx.response.body = { message: "invalid friend id" };
+        return;
+      }
+
+      await Apps.updateOne(
+        {
+          _id: app_id,
+        },
+        {
+          $addToSet: {
+            interaction: {
+              _id: interaction,
+              rarity: 1
+            }
+          },
+        }
+      );
+
+      ctx.response.body = {
+        success: true,
+        message: "Success",
+      };
+    } catch (e) {
+      console.log(e);
+      ctx.response.body = { message: "invalid app id" };
+    }
+  }
+);*/
