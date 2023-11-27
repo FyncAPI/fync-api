@@ -17,7 +17,9 @@ import { friendshipParser } from "./friendship.model.ts";
 
 export const userParser = z.object({
   _id: z.instanceof(ObjectId).or(z.string()),
-  provider: z.array(z.enum(["google", "facebook", "email"])).optional(),
+  provider: z
+    .array(z.enum(["google", "facebook", "discord", "email"]))
+    .optional(),
   devId: z.instanceof(ObjectId).or(z.string()).optional(),
   discordId: z.string().optional(),
 
@@ -76,6 +78,7 @@ export const createDiscordUserParser = userParser.pick({
   email: true,
   discordId: true,
   birthdate: true,
+  phoneNumber: true,
   profilePicture: true,
 });
 export type CreateDiscordUserSchema = z.infer<typeof createUserParser>;

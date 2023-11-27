@@ -13,11 +13,13 @@ export const interactionParser = z.object({
   description: z.string(),
   rewardDetail: z.string(),
 
-  type: z.enum(["friendship", "event"]),
-  options: z.array(z.object({
-    title: z.string(),
-    description: z.string(),
-  })),
+  type: z.enum(["friendship", "event", "game", "life"]),
+  options: z.array(
+    z.object({
+      title: z.string(),
+      description: z.string(),
+    })
+  ),
 
   startDate: z.date(),
   endDate: z.date(),
