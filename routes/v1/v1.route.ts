@@ -3,14 +3,17 @@ import { authorize } from "@/middleware/authorize.ts";
 import { scopes } from "@/utils/scope.ts";
 import { UserSchema, Users } from "@/models/user.model.ts";
 import { Apps } from "../../models/app.model.ts";
-import { InteractionSchema, Interactions } from "../../models/interaction.model.ts";
+import {
+  InteractionSchema,
+  Interactions,
+} from "../../models/interaction.model.ts";
 import { matchId, populateArray } from "@/utils/db.ts";
 import { Friendships } from "@/models/friendship.model.ts";
 import { ObjectId } from "mongo";
 import { validateAddFriendRequest } from "@/utils/friend.ts";
 import { populateByIds } from "@/db.ts";
 import { queryTranslator } from "@/utils/user.ts";
-import { v1 } from "std/uuid/mod.ts";
+
 
 export const v1Router = new Router();
 
@@ -146,11 +149,7 @@ v1Router.post("/auth/flow/discord/:cid", async (ctx) => {
       app: new ObjectId(app!._id),
       fyncId: userId,
       friends: [],
-      appInteraction: {
-        friendshipCount: 0,
-        eventCount: 0,
-        lastInteraction: new Date(),
-      },
+
       createdAt: new Date(),
     });
 
@@ -569,9 +568,9 @@ v1Router.post(
 
         startDate: new Date(),
         endDate: new Date(),
-        createdAt: new Date()
+        createdAt: new Date(),
       });
-      console.log("created interaction", interaction._id)
+      console.log("created interaction", interaction._id);
 
       await Apps.updateOne(
         {
@@ -581,8 +580,8 @@ v1Router.post(
           $addToSet: {
             interaction: {
               _id: interaction,
-              rarity: 1
-            }
+              rarity: 1,
+            },
           },
         }
       );
@@ -604,9 +603,11 @@ v1Router.get(
     try {
       const app_id = new ObjectId(ctx.params.id);
 
-      const interactions = await Interactions.aggregate([{
-        $match: {app: app_id}
-      }]).toArray();
+      const interactions = await Interactions.aggregate([
+        {
+          $match: { app: app_id },
+        },
+      ]).toArray();
 
       console.log("interactions", interactions);
 
