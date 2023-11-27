@@ -3,7 +3,11 @@ import { authorize } from "@/middleware/authorize.ts";
 import { scopes } from "@/utils/scope.ts";
 import { UserSchema, Users } from "@/models/user.model.ts";
 import { Apps } from "../../models/app.model.ts";
-import { InteractionSchema, Interactions } from "../../models/interaction.model.ts";
+import {
+  InteractionSchema,
+  Interactions,
+  interactionParser,
+} from "../../models/interaction.model.ts";
 import { matchId, populateArray } from "@/utils/db.ts";
 import { Friendships } from "@/models/friendship.model.ts";
 import { ObjectId } from "mongo";
@@ -462,9 +466,9 @@ v1Router.post(
     }
   }
 );
-v1Router.post(
+v1Router.put(
   "/apps/:id/create-interaction",
-  authorize(scopes.write.interaction),
+  authorize(scopes.dev.admin),
   async (ctx) => {
     try {
       const app_id = new ObjectId(ctx.params.id);
@@ -481,6 +485,7 @@ v1Router.post(
       const interaction = await Interactions.insertOne({
         version: 1,
         app: app._id,
+        usersId: [],
         title: "",
         description: "",
         rewardDetail: "",
@@ -490,9 +495,9 @@ v1Router.post(
 
         startDate: new Date(),
         endDate: new Date(),
-        createdAt: new Date()
+        createdAt: new Date(),
       });
-      console.log("created interaction", interaction._id)
+      console.log("created interaction", interaction._id);
 
       await Apps.updateOne(
         {
@@ -502,8 +507,8 @@ v1Router.post(
           $addToSet: {
             interaction: {
               _id: interaction,
-              rarity: 1
-            }
+              rarity: 1,
+            },
           },
         }
       );
@@ -518,16 +523,170 @@ v1Router.post(
     }
   }
 );
+v1Router.put(
+  "/apps/:id/update-interaction",
+  authorize(scopes.dev.admin),
+  async (ctx) => {
+    const body = await ctx.request.body({ type: "json" }).value;
+
+    console.log(body);
+    const result = interactionParser.partial().safeParse(body);
+    console.log(result, "updating interaction");
+
+    if (!result.success) {
+      const error = result.error.format();
+
+      ctx.response.body = error;
+    } else {
+      console.log(result.data, "result data");
+      const res = await Interactions.updateOne(
+        { _id: new ObjectId(ctx.params.id) },
+        { $set: result.data }
+      );
+      if (!res.matchedCount) {
+        ctx.response.body = { message: "Interaction not found" };
+        return;
+      }
+      console.log(res, "res");
+      const interaction = await Interactions.findOne({
+        _id: new ObjectId(ctx.params.id),
+      });
+      ctx.response.body = interaction;
+    }
+  }
+);
 v1Router.get(
   "/apps/:id/interactions",
-  authorize(scopes.read.interaction),
+  authorize(scopes.dev.admin),
   async (ctx) => {
     try {
       const app_id = new ObjectId(ctx.params.id);
 
-      const interactions = await Interactions.aggregate([{
-        $match: {app: app_id}
-      }]).toArray();
+      const interactions = await Interactions.find({
+        app: app_id,
+      }).toArray();
+
+      console.log("interactions", interactions);
+
+      ctx.response.body = {
+        success: true,
+        data: interactions,
+      };
+    } catch (e) {
+      console.log(e);
+      ctx.response.body = { message: "invalid app id" };
+    }
+  }
+);
+v1Router.post(
+  "/interaction/:id/add/:id1/:id2",
+  authorize(scopes.write.interaction),
+  async (ctx) => {
+    try {
+      const interaction_id = new ObjectId(ctx.params.id);
+      const user1_id = new ObjectId(ctx.params.id1);
+      const user2_id = new ObjectId(ctx.params.id2);
+
+      const interaction = await Interactions.findOne({ _id: interaction_id });
+
+      if (!interaction) {
+        ctx.response.body = { message: "invalid interaction id" };
+        return;
+      }
+
+      const user1 = await Users.findOne({ _id: user1_id });
+
+      if (!user1) {
+        ctx.response.body = { message: "invalid user1 id" };
+        return;
+      }
+
+      const user2 = await Users.findOne({ _id: user2_id });
+
+      if (!user2) {
+        ctx.response.body = { message: "invalid user2 id" };
+        return;
+      }
+
+      const user_friend_data = user1.friends.find((friend1) => {
+        if (friend1.user.toString() == user2._id.toString()) {
+          if (
+            user2.friends.find(
+              (friend2) => friend2.user.toString() == user1._id.toString()
+            )
+          ) {
+            return friend1;
+          }
+        }
+      });
+
+      if (!user_friend_data) {
+        ctx.response.body = { message: "user friend not match" };
+        return;
+      }
+
+      const friendship = await Friendships.findOne({
+        _id: user_friend_data.friendship,
+      });
+
+      if (!friendship) {
+        ctx.response.body = { message: "user not have friendship" };
+        return;
+      }
+
+      await Interactions.updateOne(
+        {
+          _id: interaction._id,
+        },
+        {
+          $addToSet: {
+            usersId: user1_id,
+          },
+        }
+      );
+
+      await Interactions.updateOne(
+        {
+          _id: interaction._id,
+        },
+        {
+          $addToSet: {
+            usersId: user2_id,
+          },
+        }
+      );
+
+      await Friendships.updateOne(
+        {
+          _id: user_friend_data.friendship,
+        },
+        {
+          $addToSet: {
+            interactions: interaction._id,
+          },
+        }
+      );
+
+      ctx.response.body = {
+        success: true,
+        message: "Success Add Interaction Title: '" + interaction.title + "'",
+      };
+    } catch (e) {
+      console.log(e);
+      ctx.response.body = { message: "invalid interaction id" };
+    }
+  }
+);
+v1Router.get(
+  "/users/:id/interactions",
+  authorize(scopes.read.interaction),
+  async (ctx) => {
+    try {
+      const user_id = new ObjectId(ctx.params.id);
+
+      const interactions = await Interactions.find({
+        usersId: user_id,
+      }).toArray();
 
       console.log("interactions", interactions);
 
@@ -537,7 +696,7 @@ v1Router.get(
       };
     } catch (e) {
       console.log(e);
-      ctx.response.body = { message: "invalid app id" };
+      ctx.response.body = { message: "invalid user id" };
     }
   }
 );
