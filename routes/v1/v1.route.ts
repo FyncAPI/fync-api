@@ -15,6 +15,7 @@ import { validateAddFriendRequest } from "@/utils/friend.ts";
 import { populateByIds } from "@/db.ts";
 import { queryTranslator } from "@/utils/user.ts";
 import { AuthCodes } from "@/models/authCode.model.ts";
+import { AppUsers } from "@/models/appUser.model.ts";
 
 export const v1Router = new Router();
 
