@@ -356,6 +356,7 @@ v1Router.get("/friends/@me", authorize(scopes.read.friends), async (ctx) => {
     ctx.response.body = { error: "invalid user id" };
   }
 });
+
 v1Router.post(
   "/:id/accept-friend",
   authorize(scopes.write.friends),
@@ -413,7 +414,9 @@ v1Router.post(
       await Users.updateOne(
         { _id: userId },
         {
-          $pull: { outwardFriendRequests: friendId },
+          $pullAll: {
+            outwardFriendRequests: [friend._id],
+          },
           $addToSet: {
             friends: {
               user: friend._id,
@@ -542,7 +545,7 @@ v1Router.post(
     }
   }
 );
-v1Router.put(
+v1Router.post(
   "/apps/:id/create-interaction",
   authorize(scopes.dev.admin),
   async (ctx) => {
@@ -552,28 +555,30 @@ v1Router.put(
       const app = await Apps.findOne({
         _id: app_id,
       });
+      console.log(app);
 
       if (!app) {
         ctx.response.body = { message: "invalid app id" };
         return;
       }
 
-      const interaction = await Interactions.insertOne({
+      const interactionId = await Interactions.insertOne({
         version: 1,
         app: app._id,
-        usersId: [],
         title: "",
         description: "",
         rewardDetail: "",
 
         type: "friendship",
         options: [],
+        frequency: 1,
+        urlSlug: Math.random().toString(36).substring(2, 10),
 
         startDate: new Date(),
         endDate: new Date(),
         createdAt: new Date(),
       });
-      console.log("created interaction", interaction._id);
+      console.log("created interaction", interactionId);
 
       await Apps.updateOne(
         {
@@ -582,7 +587,7 @@ v1Router.put(
         {
           $addToSet: {
             interaction: {
-              _id: interaction,
+              _id: interactionId,
               rarity: 1,
             },
           },
@@ -611,7 +616,6 @@ v1Router.put(
 
     if (!result.success) {
       const error = result.error.format();
-
       ctx.response.body = error;
     } else {
       console.log(result.data, "result data");
@@ -702,7 +706,7 @@ v1Router.post(
       }
 
       const friendship = await Friendships.findOne({
-        _id: user_friend_data.friendship,
+        _id: new ObjectId(user_friend_data.friendship.toString()),
       });
 
       if (!friendship) {
@@ -734,7 +738,7 @@ v1Router.post(
 
       await Friendships.updateOne(
         {
-          _id: user_friend_data.friendship,
+          _id: new ObjectId(user_friend_data.friendship.toString()),
         },
         {
           $addToSet: {
@@ -753,6 +757,7 @@ v1Router.post(
     }
   }
 );
+
 v1Router.get(
   "/users/:id/interactions",
   authorize(scopes.read.interaction),
@@ -760,9 +765,15 @@ v1Router.get(
     try {
       const user_id = new ObjectId(ctx.params.id);
 
-      const interactions = await Interactions.find({
-        usersId: user_id,
-      }).toArray();
+      // aggregates from all friendship of user
+      const interactions = await Friendships.aggregate([
+        {
+          $match: {
+            $or: [{ adder: user_id }, { accepter: user_id }],
+          },
+        },
+        ...populateArray("users", "friends.user", "_id", "friends"),
+      ]).toArray();
 
       console.log("interactions", interactions);
 

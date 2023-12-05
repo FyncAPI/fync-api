@@ -18,6 +18,7 @@ export type AccessToken = z.infer<typeof accessTokenParser>;
 
 export const AccessTokens = db.collection<AccessToken>("accessTokens");
 
+// AccessTokens.createIndex({ expireAt: 1 }, { expireAfterSeconds: 0 });
 AccessTokens.createIndexes({
   indexes: [
     {
@@ -39,7 +40,7 @@ export const createAccessToken = async (userId: string, code?: string) => {
       accessToken,
       tokenType: "Bearer",
       clientId: "",
-      userId,
+      userId: new ObjectId(userId),
       expireAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5),
       scopes: [
         scopes.read.friends,
