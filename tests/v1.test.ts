@@ -53,7 +53,7 @@ Deno.test({
     const friendAccessToken = await createAccessToken(friendId.toString());
     const acceptCtx = createPostCtx(
       "",
-      `/${myId.toString()}/accept-friend`,
+      `/users/${myId.toString()}/accept-friend`,
       friendAccessToken!
     );
 
