@@ -10,7 +10,7 @@ import {
 } from "../../models/interaction.model.ts";
 import { matchId, populateArray } from "@/utils/db.ts";
 import { Friendships } from "@/models/friendship.model.ts";
-import { ObjectId } from "mongo";
+import { ObjectId, Filter } from "mongo";
 import { validateAddFriendRequest } from "@/utils/friend.ts";
 import { populateByIds } from "@/db.ts";
 import { queryTranslator } from "@/utils/user.ts";
@@ -83,12 +83,17 @@ v1Router.get("/users", async (ctx) => {
 
   const users = await Users.find(
     search
-      ? {
+      ? ({
           $or: [
-            { username: { $regex: search, $options: "i" } }, // 'i' for case-insensitive
+            {
+              username: {
+                $regex: search,
+                $options: "i",
+              },
+            },
             { name: { $regex: search, $options: "i" } },
           ],
-        }
+        } as any)
       : {},
     {
       projection: { password: 0 },
@@ -361,9 +366,6 @@ v1Router.post(
   "/:id/accept-friend",
   authorize(scopes.write.friends),
   async (ctx) => {
-    // ctx.response.status = 208;
-    // ctx.response.body = { message: "accept friend" };
-    // return;
     try {
       const friendId = new ObjectId(ctx.params.id);
       const userId = new ObjectId(ctx.state.token.userId);
@@ -374,6 +376,13 @@ v1Router.post(
 
       if (!user) {
         ctx.response.body = { message: "invalid user id" };
+        return;
+      }
+
+      if (user.friends?.find((friend) => friend.user.equals(friendId))) {
+        ctx.response.body = {
+          message: "user already friends with this friend",
+        };
         return;
       }
 
@@ -399,23 +408,23 @@ v1Router.post(
       }
 
       // Create friendship document
-      const friendship = await Friendships.insertOne({
+      const newFriendship = {
         accepter: user._id,
         adder: friend._id,
         friendship: 0,
         interactions: [],
         images: [],
         videos: [],
-
         createdAt: new Date(),
-      });
+      };
+      const friendship = await Friendships.insertOne(newFriendship);
 
       // Update user and friend documents
       await Users.updateOne(
         { _id: userId },
         {
-          $pullAll: {
-            outwardFriendRequests: [friend._id],
+          $pull: {
+            inwardFriendRequests: friend._id,
           },
           $addToSet: {
             friends: {
@@ -429,17 +438,14 @@ v1Router.post(
       await Users.updateOne(
         { _id: friend._id },
         {
-          $pull: { inwardFriendRequests: user._id },
+          $pull: { outwardFriendRequests: user._id },
           $addToSet: { friends: { user: user._id, friendship: friendship } },
         }
       );
 
       ctx.response.body = {
-        success: true,
-        message: "friend request accepted",
-        data: {
-          friendship: friendship,
-        },
+        _id: friendship,
+        ...newFriendship,
       };
     } catch (e) {
       console.log(e);
@@ -779,7 +785,7 @@ v1Router.get(
 
       ctx.response.body = {
         success: true,
-        data: interactions as InteractionSchema[],
+        data: interactions,
       };
     } catch (e) {
       console.log(e);

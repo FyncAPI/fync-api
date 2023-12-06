@@ -131,12 +131,16 @@ if (!result.success) {
 app.use(router.routes());
 // app.use(router.allowedMethods());
 
-//console.log("Server running on port 8000");
-//await app.listen({ port: 8000 });
-app.addEventListener("listen", (e) => {
-  // console.log(Object.keys(e));
-  // console.log(e.port, e.listener);
-  console.log("Listening on http://localhost:" + e.port + "/");
-});
+try {
+  //console.log("Server running on port 8000");
+  //await app.listen({ port: 8000 });
+  app.addEventListener("listen", (e) => {
+    // console.log(Object.keys(e));
+    // console.log(e.port, e.listener);
+    console.log("Listening on http://localhost:" + e.port + "/");
+  });
 
-await app.listen({ port: 8080 });
+  await app.listen({ port: 8080 });
+} catch (error) {
+  console.log(error);
+}

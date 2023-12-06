@@ -2,7 +2,7 @@ import { Request, testing } from "oak/mod.ts";
 import { ServerRequestBody } from "oak/types.d.ts";
 import { UserSchema, Users } from "@/models/user.model.ts";
 
-export function createPostCtx(body: string, url: string) {
+export function createPostCtx(body: string, url: string, token?: string) {
   const ctx = testing.createMockContext();
 
   const request = new Request({
@@ -11,6 +11,7 @@ export function createPostCtx(body: string, url: string) {
       "content-type": "text/plain",
       "content-length": String(body.length),
       host: "localhost",
+      Authorization: "Bearer " + token,
     }),
     method: "POST",
     url: url,

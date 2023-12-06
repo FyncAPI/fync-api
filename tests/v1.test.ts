@@ -1,44 +1,101 @@
-import { assertEquals, assertObjectMatch } from "std/assert/mod.ts";
-import { usersRouter } from "@/routes/user.route.ts";
+import {
+  assertArrayIncludes,
+  assertEquals,
+  assertExists,
+} from "std/assert/mod.ts";
+import { v1Router } from "@/routes/v1/v1.route.ts";
 import { testing } from "oak/mod.ts";
 import { createPostCtx, createTestUser } from "./util.test.ts";
-import { ObjectId } from "https://deno.land/x/web_bson@v0.3.0/mod.js";
+import { ObjectId } from "mongo";
 import { Users } from "@/models/user.model.ts";
+import { AccessTokens, createAccessToken } from "@/models/accessToken.model.ts";
 
 Deno.test({
   name: "accept friend",
   async fn() {
     const myId = await createTestUser();
-    const friendId = await createTestUser({
-      inwardFriendRequests: [new ObjectId(myId)],
+    const friendId = await createTestUser({});
+
+    // const del = await Users.deleteMany({
+    //   username: "user1",
+    //   name: "user1",
+    //   email: "",
+    // });
+    // console.log(del);
+
+    const accessToken = await createAccessToken(myId.toString());
+    assertExists(accessToken);
+    const ctx = createPostCtx(
+      "",
+      `/users/${friendId.toString()}/add-friend`,
+      accessToken
+    );
+
+    console.log(ctx.request.headers);
+    const next = testing.createMockNext();
+
+    await v1Router.routes()(ctx, next);
+    assertEquals(ctx.response.status, 200);
+
+    const responseBody = ctx.response.body;
+
+    console.log(responseBody);
+    const userAfter = await Users.findOne({ _id: new ObjectId(myId) });
+    console.log(userAfter?.outwardFriendRequests);
+    assertArrayIncludes(userAfter!.outwardFriendRequests, [friendId]);
+
+    const friendAfter = await Users.findOne({ _id: new ObjectId(friendId) });
+    console.log(friendAfter?.inwardFriendRequests);
+    assertArrayIncludes(friendAfter!.inwardFriendRequests, [
+      new ObjectId(myId),
+    ]);
+
+    const friendAccessToken = await createAccessToken(friendId.toString());
+    const acceptCtx = createPostCtx(
+      "",
+      `/${myId.toString()}/accept-friend`,
+      friendAccessToken!
+    );
+
+    await v1Router.routes()(acceptCtx, next);
+    console.log(acceptCtx.response);
+    assertEquals(acceptCtx.response.status, 200);
+
+    //check status
+    const userAfter2 = await Users.findOne({ _id: new ObjectId(myId) });
+    console.log(userAfter2?.outwardFriendRequests);
+    assertEquals(userAfter2!.outwardFriendRequests.length, 0);
+
+    // check if inwardFriendRequests is empty
+    const friendAfter2 = await Users.findOne({ _id: new ObjectId(friendId) });
+    console.log(friendAfter2?.inwardFriendRequests);
+    assertEquals(friendAfter2!.inwardFriendRequests.length, 0);
+
+    // check if outwardFriendRequests is empty
+
+    console.log(ctx.request.headers);
+
+    //delete
+
+    const del = await Users.deleteMany({
+      name: "user1",
+      email: "",
+      username: "user1",
     });
 
-    const user = await Users.findOne({ _id: myId });
-    console.log(user);
+    assertExists(del);
 
-    // const ctx = createPostCtx("", `/v1/${friendId}/add-friend`);
+    const result = await AccessTokens.deleteMany({
+      userId: { $in: [new ObjectId(myId), new ObjectId(friendId)] },
+    });
 
-    // const next = testing.createMockNext();
+    assertArrayIncludes(friendAfter!.inwardFriendRequests, [
+      new ObjectId(myId),
+    ]);
+    assertExists(result);
 
-    // await usersRouter.routes()(ctx, next);
-
-    // if (!ctx.response.body) {
-    //   throw new Error("no response body");
-    // }
-
-    // assertEquals(ctx.response.status, 200);
-    // const responseBody = ctx.response.body as Object;
-    // assertObjectMatch(responseBody, {
-    //   success: true,
-    //   message: "friend request sent",
-    // });
-
-    // const user1 = await userCol.findOne({ _id: createdUserId });
-    // const user2 = await userCol.findOne({ _id: createdUser2Id });
-    // assert(user1, "User1 should exist in the database");
-    // assert(user2, "User2 should exist in the database");
-
-    // assertEquals(user1?.outwardFriendRequests, [new ObjectId(createdUser2Id)]);
-    // assertEquals(user2?.inwardFriendRequests, [new ObjectId(createdUserId)]);
+    console.log("done");
   },
+  sanitizeOps: false,
+  sanitizeResources: false,
 });
