@@ -8,18 +8,13 @@ import { appsRouter } from "@/routes/app.route.ts";
 import { authRouter } from "@/routes/auth.route.ts";
 import { devRouter } from "@/routes/dev.route.ts";
 import { friendshipRouter } from "@/routes/friendship.route.ts";
-import {
-  App,
-  appParser,
-  Apps,
-  AppSchema,
-  createAppParser,
-} from "@/models/app.model.ts";
+import { Apps, createAppParser } from "@/models/app.model.ts";
 import { toHashString } from "std/crypto/mod.ts";
 import * as bcrypt from "bcrypt";
 import { meRouter } from "@/routes/me.route.ts";
 import { v1 } from "std/uuid/mod.ts";
 import { v1Router } from "@/routes/v1/v1.route.ts";
+import { interactionRouter } from "@/routes/interaction.route.ts";
 
 const app = new Application();
 const router = new Router();
@@ -50,7 +45,7 @@ router.use("/users", usersRouter.routes());
 router.use("/apps", appsRouter.routes());
 router.use("/auth", authRouter.routes());
 router.use("/dev", devRouter.routes());
-router.use("/me", meRouter.routes());
+router.use("/i", interactionRouter.routes());
 router.use("/friendships", friendshipRouter.routes());
 
 router.use("/v1", v1Router.routes());
@@ -136,12 +131,16 @@ if (!result.success) {
 app.use(router.routes());
 // app.use(router.allowedMethods());
 
-//console.log("Server running on port 8000");
-//await app.listen({ port: 8000 });
-app.addEventListener("listen", (e) => {
-  // console.log(Object.keys(e));
-  // console.log(e.port, e.listener);
-  console.log("Listening on http://localhost:" + e.port + "/");
-});
+try {
+  //console.log("Server running on port 8000");
+  //await app.listen({ port: 8000 });
+  app.addEventListener("listen", (e) => {
+    // console.log(Object.keys(e));
+    // console.log(e.port, e.listener);
+    console.log("Listening on http://localhost:" + e.port + "/");
+  });
 
-await app.listen({ port: 8080 });
+  await app.listen({ port: 8080 });
+} catch (error) {
+  console.log(error);
+}

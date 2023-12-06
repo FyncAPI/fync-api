@@ -4,14 +4,16 @@ import { db } from "@/db.ts";
 
 export type InteractionSchema = z.infer<typeof interactionParser>;
 
+// also updte the frontend
 export const interactionParser = z.object({
   _id: z.instanceof(ObjectId).or(z.string()),
   version: z.number(),
   app: z.instanceof(ObjectId).or(z.string()),
-  usersId: z.array(z.instanceof(ObjectId).or(z.string())),
   title: z.string(),
   description: z.string(),
   rewardDetail: z.string(),
+  urlSlug: z.string(),
+  frequency: z.number().optional(),
 
   type: z.enum(["friendship", "event", "game", "life"]),
   options: z.array(
@@ -21,8 +23,8 @@ export const interactionParser = z.object({
     })
   ),
 
-  startDate: z.date(),
-  endDate: z.date(),
+  startDate: z.date().optional(),
+  endDate: z.date().optional(),
   createdAt: z.date(),
 });
 

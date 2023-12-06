@@ -16,7 +16,7 @@ import { friendshipParser } from "./friendship.model.ts";
 // }
 
 export const userParser = z.object({
-  _id: z.instanceof(ObjectId).or(z.string()),
+  _id: z.instanceof(ObjectId),
   provider: z
     .array(z.enum(["google", "facebook", "discord", "email"]))
     .optional(),
@@ -32,21 +32,14 @@ export const userParser = z.object({
 
   friends: z.array(
     z.object({
-      friendship: friendshipParser.or(z.instanceof(ObjectId).or(z.string())),
-      user: z.instanceof(ObjectId).or(z.string()),
+      friendship: friendshipParser.or(z.instanceof(ObjectId)),
+      user: z.instanceof(ObjectId),
     })
   ),
 
-  inwardFriendRequests: z
-    .array(z.instanceof(ObjectId).or(z.string()))
-    .optional(),
-  outwardFriendRequests: z
-    .array(z.instanceof(ObjectId).or(z.string()))
-    .optional(),
-  declinedFriendRequests: z
-    .array(z.instanceof(ObjectId).or(z.string()))
-    .optional(),
-
+  inwardFriendRequests: z.array(z.instanceof(ObjectId).or(z.string())),
+  outwardFriendRequests: z.array(z.instanceof(ObjectId)),
+  declinedFriendRequests: z.array(z.instanceof(ObjectId).or(z.string())),
   email: z.string(),
   password: z.string().optional(),
   verified: z.boolean(),

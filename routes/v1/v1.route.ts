@@ -10,7 +10,7 @@ import {
 } from "../../models/interaction.model.ts";
 import { matchId, populateArray } from "@/utils/db.ts";
 import { Friendships } from "@/models/friendship.model.ts";
-import { ObjectId } from "mongo";
+import { ObjectId, Filter } from "mongo";
 import { validateAddFriendRequest } from "@/utils/friend.ts";
 import { populateByIds } from "@/db.ts";
 import { queryTranslator } from "@/utils/user.ts";
@@ -83,12 +83,17 @@ v1Router.get("/users", async (ctx) => {
 
   const users = await Users.find(
     search
-      ? {
+      ? ({
           $or: [
-            { username: { $regex: search, $options: "i" } }, // 'i' for case-insensitive
+            {
+              username: {
+                $regex: search,
+                $options: "i",
+              },
+            },
             { name: { $regex: search, $options: "i" } },
           ],
-        }
+        } as any)
       : {},
     {
       projection: { password: 0 },
@@ -356,13 +361,11 @@ v1Router.get("/friends/@me", authorize(scopes.read.friends), async (ctx) => {
     ctx.response.body = { error: "invalid user id" };
   }
 });
+
 v1Router.post(
   "/:id/accept-friend",
   authorize(scopes.write.friends),
   async (ctx) => {
-    // ctx.response.status = 208;
-    // ctx.response.body = { message: "accept friend" };
-    // return;
     try {
       const friendId = new ObjectId(ctx.params.id);
       const userId = new ObjectId(ctx.state.token.userId);
@@ -373,6 +376,13 @@ v1Router.post(
 
       if (!user) {
         ctx.response.body = { message: "invalid user id" };
+        return;
+      }
+
+      if (user.friends?.find((friend) => friend.user.equals(friendId))) {
+        ctx.response.body = {
+          message: "user already friends with this friend",
+        };
         return;
       }
 
@@ -398,22 +408,24 @@ v1Router.post(
       }
 
       // Create friendship document
-      const friendship = await Friendships.insertOne({
+      const newFriendship = {
         accepter: user._id,
         adder: friend._id,
         friendship: 0,
         interactions: [],
         images: [],
         videos: [],
-
         createdAt: new Date(),
-      });
+      };
+      const friendship = await Friendships.insertOne(newFriendship);
 
       // Update user and friend documents
       await Users.updateOne(
         { _id: userId },
         {
-          $pull: { outwardFriendRequests: friendId },
+          $pull: {
+            inwardFriendRequests: friend._id,
+          },
           $addToSet: {
             friends: {
               user: friend._id,
@@ -426,17 +438,14 @@ v1Router.post(
       await Users.updateOne(
         { _id: friend._id },
         {
-          $pull: { inwardFriendRequests: user._id },
+          $pull: { outwardFriendRequests: user._id },
           $addToSet: { friends: { user: user._id, friendship: friendship } },
         }
       );
 
       ctx.response.body = {
-        success: true,
-        message: "friend request accepted",
-        data: {
-          friendship: friendship,
-        },
+        _id: friendship,
+        ...newFriendship,
       };
     } catch (e) {
       console.log(e);
@@ -542,7 +551,7 @@ v1Router.post(
     }
   }
 );
-v1Router.put(
+v1Router.post(
   "/apps/:id/create-interaction",
   authorize(scopes.dev.admin),
   async (ctx) => {
@@ -552,28 +561,30 @@ v1Router.put(
       const app = await Apps.findOne({
         _id: app_id,
       });
+      console.log(app);
 
       if (!app) {
         ctx.response.body = { message: "invalid app id" };
         return;
       }
 
-      const interaction = await Interactions.insertOne({
+      const interactionId = await Interactions.insertOne({
         version: 1,
         app: app._id,
-        usersId: [],
         title: "",
         description: "",
         rewardDetail: "",
 
         type: "friendship",
         options: [],
+        frequency: 1,
+        urlSlug: Math.random().toString(36).substring(2, 10),
 
         startDate: new Date(),
         endDate: new Date(),
         createdAt: new Date(),
       });
-      console.log("created interaction", interaction._id);
+      console.log("created interaction", interactionId);
 
       await Apps.updateOne(
         {
@@ -582,7 +593,7 @@ v1Router.put(
         {
           $addToSet: {
             interaction: {
-              _id: interaction,
+              _id: interactionId,
               rarity: 1,
             },
           },
@@ -611,7 +622,6 @@ v1Router.put(
 
     if (!result.success) {
       const error = result.error.format();
-
       ctx.response.body = error;
     } else {
       console.log(result.data, "result data");
@@ -702,7 +712,7 @@ v1Router.post(
       }
 
       const friendship = await Friendships.findOne({
-        _id: user_friend_data.friendship,
+        _id: new ObjectId(user_friend_data.friendship.toString()),
       });
 
       if (!friendship) {
@@ -734,7 +744,7 @@ v1Router.post(
 
       await Friendships.updateOne(
         {
-          _id: user_friend_data.friendship,
+          _id: new ObjectId(user_friend_data.friendship.toString()),
         },
         {
           $addToSet: {
@@ -753,6 +763,7 @@ v1Router.post(
     }
   }
 );
+
 v1Router.get(
   "/users/:id/interactions",
   authorize(scopes.read.interaction),
@@ -760,15 +771,21 @@ v1Router.get(
     try {
       const user_id = new ObjectId(ctx.params.id);
 
-      const interactions = await Interactions.find({
-        usersId: user_id,
-      }).toArray();
+      // aggregates from all friendship of user
+      const interactions = await Friendships.aggregate([
+        {
+          $match: {
+            $or: [{ adder: user_id }, { accepter: user_id }],
+          },
+        },
+        ...populateArray("users", "friends.user", "_id", "friends"),
+      ]).toArray();
 
       console.log("interactions", interactions);
 
       ctx.response.body = {
         success: true,
-        data: interactions as InteractionSchema[],
+        data: interactions,
       };
     } catch (e) {
       console.log(e);

@@ -7,46 +7,13 @@ import {
 } from "std/testing/asserts.ts";
 import { BodyFormData, BodyJson, testing } from "oak";
 import { usersRouter } from "../routes/user.route.ts";
-import { CreateUserSchema, UserSchema } from "../models/user.model.ts";
+import { CreateUserSchema, UserSchema, Users } from "../models/user.model.ts";
 import { Request } from "oak/request.ts";
 import { ServerRequestBody } from "oak/types.d.ts";
 import { MongoClient, ObjectId } from "mongo";
 import { db } from "../db.ts";
 import { FriendshipSchema } from "../models/friendship.model.ts";
-
-export function createPostCtx(body: string, url: string) {
-  const ctx = testing.createMockContext();
-
-  const request = new Request({
-    remoteAddr: undefined,
-    headers: new Headers({
-      "content-type": "text/plain",
-      "content-length": String(body.length),
-      host: "localhost",
-    }),
-    method: "POST",
-    url: url,
-    // deno-lint-ignore no-explicit-any
-    error(_reason?: any) {},
-    getBody(): ServerRequestBody {
-      return {
-        body: null,
-        readBody: () => Promise.resolve(new TextEncoder().encode(body)),
-      };
-    },
-    respond: (_response: Response) => Promise.resolve(),
-  });
-  ctx.request = request;
-  return ctx;
-}
-
-export function createGetCtx(url: string) {
-  const ctx = testing.createMockContext({
-    path: url,
-    method: "GET",
-  });
-  return ctx;
-}
+import { createPostCtx, createGetCtx } from "./util.test.ts";
 
 Deno.test({
   name: "list users",
