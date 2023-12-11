@@ -1,10 +1,10 @@
 import { Status } from "https://deno.land/std@0.200.0/http/http_status.ts";
 import { Context } from "oak/mod.ts";
 import { AccessTokens } from "../models/accessToken.model.ts";
-import { ScopeValues } from "@/utils/scope.ts";
+import { scopes } from "@/utils/scope.ts";
 
 export const authorize =
-  (scope: ScopeValues) =>
+  (scope: string[] | string) =>
   async (ctx: Context, next: () => Promise<unknown>) => {
     const token = ctx.request.headers.get("Authorization")?.split(" ")[1];
 
@@ -29,8 +29,19 @@ export const authorize =
 
     /*console.log("dbToken", dbToken.accessToken);
     console.log("dbToken", dbToken.scopes);*/
+    // check if every scopes in scope is included in dbToken.scopes
+    if (
+      scope instanceof Array &&
+      !scope.every((s) => dbToken.scopes.includes(s))
+    ) {
+      ctx.response.status = Status.Unauthorized;
+      ctx.response.body = {
+        message: "Unauthorized - Invalid scope",
+      };
+      return;
+    }
 
-    if (!dbToken.scopes.includes(scope)) {
+    if (typeof scope === "string" && !dbToken.scopes.includes(scope)) {
       ctx.response.status = Status.Unauthorized;
       ctx.response.body = {
         message: "Unauthorized - Invalid scope",

@@ -1,7 +1,7 @@
 import { ObjectId } from "mongo";
 import { db } from "@/db.ts";
 import { z } from "zod";
-import { scopes } from "@/utils/scope.ts";
+import { allScopes, scopes } from "@/utils/scope.ts";
 import * as bcrypt from "bcrypt";
 
 export const accessTokenParser = z.object({
@@ -29,7 +29,11 @@ AccessTokens.createIndexes({
   ],
 });
 
-export const createAccessToken = async (userId: string, code?: string) => {
+export const createFyncAccessToken = async (
+  userId: string,
+  code?: string,
+  someScopes?: string[]
+) => {
   try {
     const accessToken =
       Deno.env.get("ENV") == "dev"
@@ -42,14 +46,7 @@ export const createAccessToken = async (userId: string, code?: string) => {
       clientId: "",
       userId: new ObjectId(userId),
       expireAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5),
-      scopes: [
-        scopes.read.friends,
-        scopes.read.profile,
-        scopes.read.posts,
-        scopes.write.friendship,
-        scopes.write.apps,
-        scopes.write.friends,
-      ],
+      scopes: someScopes || allScopes,
     });
 
     return accessToken;

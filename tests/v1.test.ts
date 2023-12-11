@@ -8,7 +8,11 @@ import { testing } from "oak/mod.ts";
 import { createPostCtx, createTestUser } from "./util.test.ts";
 import { ObjectId } from "mongo";
 import { Users } from "@/models/user.model.ts";
-import { AccessTokens, createAccessToken } from "@/models/accessToken.model.ts";
+import {
+  AccessTokens,
+  createFyncAccessToken,
+} from "@/models/accessToken.model.ts";
+import { scopes } from "@/utils/scope.ts";
 
 Deno.test({
   name: "accept friend",
@@ -23,7 +27,9 @@ Deno.test({
     // });
     // console.log(del);
 
-    const accessToken = await createAccessToken(myId.toString());
+    const accessToken = await createFyncAccessToken(myId.toString(), "", [
+      scopes.friend.write,
+    ]);
     assertExists(accessToken);
     const ctx = createPostCtx(
       "",
@@ -50,7 +56,7 @@ Deno.test({
       new ObjectId(myId),
     ]);
 
-    const friendAccessToken = await createAccessToken(friendId.toString());
+    const friendAccessToken = await createFyncAccessToken(friendId.toString());
     const acceptCtx = createPostCtx(
       "",
       `/users/${myId.toString()}/accept-friend`,

@@ -115,7 +115,7 @@ usersRouter
     ctx.response.body = user;
   });
 
-usersRouter.get("/@me", authorize(scopes.read.profile), async (ctx) => {
+usersRouter.get("/@me", authorize(scopes.profile.read), async (ctx) => {
   console.log(ctx.state.token);
   // ctx.response.body = ctx.state.token;
   const user = await Users.findOne({ _id: ctx.state.token.userId });
@@ -281,9 +281,7 @@ usersRouter
         return;
       }
 
-      const friends = z
-        .array(userParser)
-        .parse((users[0] as UserSchema).canceledFriendRequests);
+      const friends = z.array(userParser).parse(users[0] as UserSchema);
 
       ctx.response.body = friends || [];
     } catch (e) {
@@ -402,7 +400,7 @@ usersRouter
         friendship: 0,
         images: [],
         videos: [],
-
+        interactions: [],
         createdAt: new Date(),
       });
 

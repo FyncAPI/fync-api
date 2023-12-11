@@ -26,7 +26,7 @@ export const interactionRouter = new Router();
  */
 interactionRouter.post(
   "/:slug",
-  authorize(scopes.write.interaction),
+  authorize(scopes.friendship.write),
   async (ctx) => {
     console.log(ctx.state.token);
     const body = await ctx.request.body({ type: "json" }).value;

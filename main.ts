@@ -10,9 +10,6 @@ import { devRouter } from "@/routes/dev.route.ts";
 import { friendshipRouter } from "@/routes/friendship.route.ts";
 import { Apps, createAppParser } from "@/models/app.model.ts";
 import { toHashString } from "std/crypto/mod.ts";
-import * as bcrypt from "bcrypt";
-import { meRouter } from "@/routes/me.route.ts";
-import { v1 } from "std/uuid/mod.ts";
 import { v1Router } from "@/routes/v1/v1.route.ts";
 import { interactionRouter } from "@/routes/interaction.route.ts";
 

@@ -14,7 +14,7 @@ import { ObjectId } from "mongo";
 import { oakCors } from "https://deno.land/x/cors@v1.2.2/oakCors.ts";
 import {
   AccessTokens,
-  createAccessToken,
+  createFyncAccessToken,
 } from "../models/accessToken.model.ts";
 import { Devs } from "@/models/dev.model.ts";
 import { scopes } from "@/utils/scope.ts";
@@ -79,17 +79,21 @@ authRouter.post("/email/register", async (ctx) => {
       return;
     }
 
-    const profilePic = new File([file.content], file.filename || "zry", {
-      type: file.contentType,
-    });
+    let imgUrl = "";
+    if (file && file.content) {
+      // do sth
 
-    const optimizedPfp = await optimizeImage(profilePic);
+      const profilePic = new File([file.content], file.filename || "zry", {
+        type: file.contentType,
+      });
 
-    const imgUrl = await UploadFile(
-      optimizedPfp,
-      "prof" + body.fields.name + Date.now()
-    );
+      const optimizedPfp = await optimizeImage(profilePic);
 
+      imgUrl = await UploadFile(
+        optimizedPfp,
+        "prof" + body.fields.name + Date.now()
+      );
+    }
     const userData = result.data;
     const salt =
       Deno.env.get("ENV") == "dev"
@@ -110,6 +114,9 @@ authRouter.post("/email/register", async (ctx) => {
       friends: [],
       verified: false,
       createdAt: new Date(),
+      declinedFriendRequests: [],
+      inwardFriendRequests: [],
+      outwardFriendRequests: [],
     });
 
     const user = {
@@ -127,7 +134,7 @@ authRouter.post("/email/register", async (ctx) => {
       createdAt: new Date(),
     };
 
-    const accessToken = await createAccessToken(userId.toString());
+    const accessToken = await createFyncAccessToken(userId.toString());
 
     ctx.response.body = {
       message: "User created",
@@ -169,27 +176,15 @@ authRouter.post("/email", async (ctx) => {
   delete userData.password;
   console.log("User logged in", userData);
   // get access token
-  const accessToken =
-    Deno.env.get("ENV") == "dev"
-      ? await bcrypt.hash(userData._id.toString(), await bcrypt.genSalt(10))
-      : bcrypt.hashSync(userData._id.toString(), bcrypt.genSaltSync(10));
+  const accessToken = await createFyncAccessToken(userData._id.toString());
 
-  const tokenId = await AccessTokens.insertOne({
-    accessToken,
-    tokenType: "Bearer",
-    clientId: "",
-    userId: userData._id,
-    expireAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5),
-    scopes: [
-      scopes.read.friends,
-      scopes.read.profile,
-      scopes.read.posts,
-      scopes.write.friendship,
-      scopes.write.apps,
-      scopes.write.friends,
-    ],
-  });
-
+  if (!accessToken) {
+    ctx.response.status = 500;
+    ctx.response.body = {
+      error: "Could not create access token",
+    };
+    return;
+  }
   ctx.response.body = {
     message: "User logged in",
     user: userData,
@@ -253,7 +248,7 @@ authRouter.post("/discord", async (ctx) => {
       );
     }
     // do the auth and send back code
-    const accessToken = await createAccessToken(user._id.toString());
+    const accessToken = await createFyncAccessToken(user._id.toString());
     ctx.response.status = 200;
     ctx.response.body = {
       user,
@@ -299,9 +294,12 @@ authRouter.post("/discord/register", async (ctx) => {
       friends: [],
       verified: false,
       createdAt: new Date(),
+      declinedFriendRequests: [],
+      inwardFriendRequests: [],
+      outwardFriendRequests: [],
     });
-    if (file) {
-      const profilePic = new File([file.content], file.filename || "zry", {
+    if (file && file.content) {
+      const profilePic = new File([file.content], file.filename || "pfp", {
         type: file.contentType,
       });
 
@@ -317,7 +315,7 @@ authRouter.post("/discord/register", async (ctx) => {
         { $set: { profilePicture: imgUrl } }
       );
     }
-    const accessToken = await createAccessToken(userId.toString());
+    const accessToken = await createFyncAccessToken(userId.toString());
 
     const newUser = await Users.findOne({ _id: new ObjectId(userId) });
     ctx.response.body = {

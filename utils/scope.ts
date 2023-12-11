@@ -1,32 +1,25 @@
+// need to update scopes in the backend as well
 export const scopes = {
-  read: {
-    profile: "profile.read",
-    // email: "read:email",
-    friends: "friends.read",
-    posts: "posts.read",
-    interaction: "interaction.read",
+  profile: { read: "profile.read" },
+  posts: { read: "posts.read" },
+  apps: { read: "apps.read" },
+  friend: {
+    read: "friend.read",
+    write: "friend.write",
   },
-  write: {
-    // profile: "should",
-    // email: "write:email",
-    friends: "friends.write",
-    apps: "apps.write",
-    friendship: "friendship.write",
-    interaction: "interaction.write",
+  friendship: {
+    read: "friendship.read",
+    write: "friendship.write",
   },
-  dev: {
-    admin: "dev:admin",
+  interaction: {
+    read: "interaction.read",
+    write: "interaction.write",
   },
+  dev: { admin: "dev:admin" },
 } as const;
-// export const scopes = {
-//   profile: ["profile.read"],
-//   posts: ["posts.read"],
-//   apps: ["apps.read"],
-//   friend: ["friends.read", "friendrequest.send", "friendrequest.read"],
-//   dev: ["dev:admin"],
-// };
 
-export type ReadScopeValues = (typeof scopes.read)[keyof typeof scopes.read];
-export type WriteScopeValues = (typeof scopes.write)[keyof typeof scopes.write];
-export type DevScopeValues = (typeof scopes.dev)[keyof typeof scopes.dev];
-export type ScopeValues = ReadScopeValues | WriteScopeValues | DevScopeValues;
+export const allScopes = Object.values(scopes)
+  .map((scope) => Object.values(scope))
+  .flat();
+
+allScopes.find((s) => !"profile.read".includes(s));

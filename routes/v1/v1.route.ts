@@ -35,7 +35,7 @@ export const v1Router = new Router();
 // get my apps
 // show apps data
 
-v1Router.get("/users/@me", authorize(scopes.read.profile), async (ctx) => {
+v1Router.get("/users/@me", authorize(scopes.profile.read), async (ctx) => {
   console.log(ctx.state.token);
   const userId = new ObjectId(ctx.state.token.userId);
   // ctx.response.body = ctx.state.token;
@@ -50,7 +50,7 @@ v1Router.get("/users/@me", authorize(scopes.read.profile), async (ctx) => {
   ctx.response.body = user;
 });
 
-v1Router.get("/users/:id", authorize(scopes.read.profile), async (ctx) => {
+v1Router.get("/users/:id", authorize(scopes.profile.read), async (ctx) => {
   console.log(ctx.state.token);
   const stages = queryTranslator(ctx.request.url.searchParams);
   const user = await Users.aggregate([
@@ -180,7 +180,7 @@ v1Router.post("/auth/flow/discord/:cid", async (ctx) => {
 });
 v1Router.post(
   "/users/:id/add-friend",
-  authorize(scopes.write.friends),
+  authorize(scopes.friend.write),
   async (ctx) => {
     const userId = new ObjectId(ctx.state.token.userId);
     try {
@@ -237,7 +237,7 @@ v1Router.post(
 
 v1Router.get(
   "/friend-requests/@me/in",
-  authorize(scopes.read.friends),
+  authorize(scopes.friend.read),
   async (ctx) => {
     const userId = new ObjectId(ctx.state.token.userId);
     try {
@@ -268,7 +268,7 @@ v1Router.get(
 
 v1Router.get(
   "/friend-requests/@me",
-  authorize(scopes.read.friends),
+  authorize(scopes.friend.read),
   async (ctx) => {
     const userId = new ObjectId(ctx.state.token.userId);
     try {
@@ -303,7 +303,7 @@ v1Router.get(
   }
 );
 
-v1Router.get("/friends/@me", authorize(scopes.read.friends), async (ctx) => {
+v1Router.get("/friends/@me", authorize(scopes.friend.read), async (ctx) => {
   const friendRequests =
     ctx.request.url.searchParams.get("friendRequests") === "true";
 
@@ -364,7 +364,7 @@ v1Router.get("/friends/@me", authorize(scopes.read.friends), async (ctx) => {
 
 v1Router.post(
   "/users/:id/accept-friend",
-  authorize(scopes.write.friends),
+  authorize(scopes.friend.write),
   async (ctx) => {
     try {
       const friendId = new ObjectId(ctx.params.id);
@@ -456,7 +456,7 @@ v1Router.post(
 );
 v1Router.post(
   "/users/:id/decline-friend",
-  authorize(scopes.write.friends),
+  authorize(scopes.friend.write),
   async (ctx) => {
     try {
       const friendId = new ObjectId(ctx.params.id);
@@ -506,7 +506,7 @@ v1Router.post(
 );
 v1Router.post(
   "/users/:id/cancel-friend",
-  authorize(scopes.write.friends),
+  authorize(scopes.friend.write),
   async (ctx) => {
     try {
       const friendId = new ObjectId(ctx.params.id);
@@ -666,7 +666,7 @@ v1Router.get(
 );
 v1Router.post(
   "/interaction/:id/add/:id1/:id2",
-  authorize(scopes.write.interaction),
+  authorize(scopes.interaction.write),
   async (ctx) => {
     try {
       const interaction_id = new ObjectId(ctx.params.id);
@@ -766,7 +766,7 @@ v1Router.post(
 
 v1Router.get(
   "/users/:id/interactions",
-  authorize(scopes.read.interaction),
+  authorize(scopes.interaction.write),
   async (ctx) => {
     try {
       const user_id = new ObjectId(ctx.params.id);

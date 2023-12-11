@@ -37,9 +37,9 @@ export const userParser = z.object({
     })
   ),
 
-  inwardFriendRequests: z.array(z.instanceof(ObjectId).or(z.string())),
+  inwardFriendRequests: z.array(z.instanceof(ObjectId)),
   outwardFriendRequests: z.array(z.instanceof(ObjectId)),
-  declinedFriendRequests: z.array(z.instanceof(ObjectId).or(z.string())),
+  declinedFriendRequests: z.array(z.instanceof(ObjectId)),
   email: z.string(),
   password: z.string().optional(),
   verified: z.boolean(),
