@@ -158,6 +158,8 @@ authRouter.post("/email", async (ctx) => {
       : bcrypt.compareSync(password, userData.password);
 
   if (!validPassword) {
+    console.log("Invalid password");
+    ctx.response.status = 401;
     ctx.response.body = {
       error: "Invalid password",
     };

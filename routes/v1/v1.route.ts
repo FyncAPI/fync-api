@@ -363,7 +363,7 @@ v1Router.get("/friends/@me", authorize(scopes.read.friends), async (ctx) => {
 });
 
 v1Router.post(
-  "/:id/accept-friend",
+  "/users/:id/accept-friend",
   authorize(scopes.write.friends),
   async (ctx) => {
     try {
@@ -455,7 +455,7 @@ v1Router.post(
   }
 );
 v1Router.post(
-  "/:id/decline-friend",
+  "/users/:id/decline-friend",
   authorize(scopes.write.friends),
   async (ctx) => {
     try {
@@ -505,7 +505,7 @@ v1Router.post(
   }
 );
 v1Router.post(
-  "/:id/cancel-friend",
+  "/users/:id/cancel-friend",
   authorize(scopes.write.friends),
   async (ctx) => {
     try {
