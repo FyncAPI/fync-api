@@ -34,9 +34,12 @@ export const authorize =
       scope instanceof Array &&
       !scope.every((s) => dbToken.scopes.includes(s))
     ) {
+      const missingScopes = scope.filter((s) => !dbToken.scopes.includes(s));
       ctx.response.status = Status.Unauthorized;
       ctx.response.body = {
-        message: "Unauthorized - Invalid scope",
+        message:
+          "Unauthorized - Invalid scope, must include " +
+          missingScopes.concat(", "),
       };
       return;
     }
@@ -44,7 +47,7 @@ export const authorize =
     if (typeof scope === "string" && !dbToken.scopes.includes(scope)) {
       ctx.response.status = Status.Unauthorized;
       ctx.response.body = {
-        message: "Unauthorized - Invalid scope",
+        message: "Unauthorized - Invalid scope, must include " + scope,
       };
       return;
     }
