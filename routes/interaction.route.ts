@@ -42,17 +42,32 @@ interactionRouter.post(
     }
 
     // if (body.users) {
-    const users = await Users.find({ _id: { $in: body.users } }).toArray();
-    const friendshipIds = users.map(
-      (user) =>
-        new ObjectId(
-          (
-            user.friends.find(
-              (friend) => friend.user === ctx.state.token.userId
-            )?.friendship || ""
-          ).toString()
-        )
-    );
+    // const users = await Users.find({ _id: { $in: body.users } }).toArray();
+    const user = await Users.findOne({ _id: ctx.state.token.userId });
+    const friendshipIds = user?.friends.map((friend) => {
+      if (body.users.includes(friend.user.toString())) {
+        return friend.friendship;
+      }
+    }) as ObjectId[];
+
+    if (!friendshipIds || !friendshipIds.length) {
+      ctx.response.status = 404;
+      ctx.response.body = {
+        message: "Friendship not found with the provided users",
+      };
+      return;
+    }
+    // const friend
+    // const friendshipIds = users.map(
+    //   (user) =>
+    //     new ObjectId(
+    //       (
+    //         user.friends.find(
+    //           (friend) => friend.user === ctx.state.token.userId
+    //         )?.friendship || ""
+    //       ).toString()
+    //     )
+    // );
     // }
     // const user = await Users.findOne({ _id: ctx.state.token.userId });
     // find friendship between user and users
@@ -71,7 +86,7 @@ interactionRouter.post(
       }
     );
 
-    if (!friendshipsUpdated.modifiedCount) {
+    if (!friendshipsUpdated.matchedCount) {
       ctx.response.status = 404;
       ctx.response.body = { message: "Friendship not found" };
       return;
