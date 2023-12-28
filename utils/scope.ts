@@ -3,6 +3,7 @@ export const scopes = {
   profile: { read: "profile.read" },
   posts: { read: "posts.read" },
   apps: { read: "apps.read" },
+  meet: { test: "meet.test" },
   friend: {
     read: "friend.read",
     write: "friend.write",
