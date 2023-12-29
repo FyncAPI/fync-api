@@ -8,6 +8,7 @@ import {
   Interactions,
   interactionParser,
 } from "../../models/interaction.model.ts";
+import { MeetSchema, Meets, meetParser } from "../../models/meet.model.ts";
 import { matchId, populateArray } from "@/utils/db.ts";
 import { Friendships } from "@/models/friendship.model.ts";
 import { ObjectId, Filter } from "mongo";
@@ -763,7 +764,6 @@ v1Router.post(
     }
   }
 );
-
 v1Router.get(
   "/users/:id/interactions",
   authorize(scopes.interaction.write),
@@ -859,3 +859,293 @@ v1Router.get(
     }
   }
 );*/
+
+v1Router.post("/meets/create", authorize(scopes.meet.test), async (ctx) => {
+  const body = await ctx.request.body({ type: "json" }).value;
+
+  const userId = new ObjectId(ctx.state.token.userId);
+
+  try {
+    const meetId = await Meets.insertOne({
+      userId: userId,
+      title: body.title,
+      description: body.description,
+
+      meetTime: new Date(body.meetTime),
+      meetType: body.meetType,
+      meetTags: body.meetTags || [],
+      meetImages: body.meetImages || [],
+      meetMaxUser: body.meetMaxUsers || 10,
+      meetPublicType: body.meetPublicType || "all",
+      meetUsers: [userId],
+
+      reactionEmoji: {
+        like: [],
+        love: [],
+        smile: [],
+        sad: [],
+        angry: [],
+      },
+
+      createdAt: new Date(),
+    });
+
+    const meet = await Meets.findOne({ _id: meetId });
+
+    if (!meet) {
+      ctx.response.body = { message: "invalid meet id" };
+      return;
+    }
+
+    ctx.response.body = {
+      success: true,
+      message: meet,
+    };
+  } catch (e) {
+    console.log(e);
+    ctx.response.body = { message: "json not match" };
+  }
+});
+v1Router.get("/meets/:meetId", async (ctx) => {
+  const meetId = new ObjectId(ctx.params.meetId);
+
+  const meet = await Meets.findOne({ _id: meetId });
+
+  if (!meet) {
+    ctx.response.body = { message: "invalid meet id" };
+    return;
+  }
+
+  ctx.response.body = {
+    success: true,
+    message: meet,
+  };
+});
+v1Router.post("/meets/:meetId/reaction", authorize(scopes.meet.test), async (ctx) => {
+  const body = await ctx.request.body({ type: "json" }).value;
+
+  const userId = new ObjectId(ctx.state.token.userId);
+  const meetId = new ObjectId(ctx.params.meetId);
+
+  const meet = await Meets.findOne({ _id: meetId });
+
+  if (!meet) {
+    ctx.response.body = { message: "invalid meet id" };
+    return;
+  }
+
+  switch (body.reaction || "") {
+    case "like":
+      if (
+        meet.reactionEmoji.like.find(
+          (reactionUserId) => reactionUserId === userId
+        )
+      ) {
+        await Meets.updateOne(
+          { _id: meetId },
+          { $pull: { "reactionEmoji.like": userId } }
+        );
+      } else {
+        await Meets.updateOne(
+          { _id: meetId },
+          { $addToSet: { "reactionEmoji.like": userId } }
+        );
+      }
+
+      break;
+    case "love":
+      if (
+        meet.reactionEmoji.love.find(
+          (reactionUserId) => reactionUserId === userId
+        )
+      ) {
+        await Meets.updateOne(
+          { _id: meetId },
+          { $pull: { "reactionEmoji.love": userId } }
+        );
+      } else {
+        await Meets.updateOne(
+          { _id: meetId },
+          { $addToSet: { "reactionEmoji.love": userId } }
+        );
+      }
+
+      break;
+    case "smile":
+      if (
+        meet.reactionEmoji.smile.find(
+          (reactionUserId) => reactionUserId === userId
+        )
+      ) {
+        await Meets.updateOne(
+          { _id: meetId },
+          { $pull: { "reactionEmoji.smile": userId } }
+        );
+      } else {
+        await Meets.updateOne(
+          { _id: meetId },
+          { $addToSet: { "reactionEmoji.smile": userId } }
+        );
+      }
+
+      break;
+    case "sad":
+      if (
+        meet.reactionEmoji.sad.find(
+          (reactionUserId) => reactionUserId === userId
+        )
+      ) {
+        await Meets.updateOne(
+          { _id: meetId },
+          { $pull: { "reactionEmoji.sad": userId } }
+        );
+      } else {
+        await Meets.updateOne(
+          { _id: meetId },
+          { $addToSet: { "reactionEmoji.sad": userId } }
+        );
+      }
+
+      break;
+    case "angry":
+      if (
+        meet.reactionEmoji.angry.find(
+          (reactionUserId) => reactionUserId === userId
+        )
+      ) {
+        await Meets.updateOne(
+          { _id: meetId },
+          { $pull: { "reactionEmoji.angry": userId } }
+        );
+      } else {
+        await Meets.updateOne(
+          { _id: meetId },
+          { $addToSet: { "reactionEmoji.angry": userId } }
+        );
+      }
+
+      break;
+    default:
+      ctx.response.body = { message: "json not match" };
+      return;
+  }
+
+  const meetNew = await Meets.findOne({ _id: meetId });
+
+  ctx.response.body = {
+    success: true,
+    message: meetNew,
+  };
+});
+v1Router.post(
+  "/meets/:meetId/cancel",
+  authorize(scopes.meet.test),
+  async (ctx) => {
+    const userId = new ObjectId(ctx.state.token.userId);
+    const meetId = new ObjectId(ctx.params.meetId);
+
+    const meet = await Meets.findOne({ _id: meetId });
+
+    if (!meet) {
+      ctx.response.body = { message: "invalid meet id" };
+      return;
+    }
+
+    if (meet.userId !== userId) {
+      ctx.response.body = { message: "user is not owner" };
+      return;
+    }
+
+    await Meets.delete({ _id: meetId });
+
+    ctx.response.body = {
+      success: true,
+    };
+  }
+);
+v1Router.post(
+  "/meets/:meetId/join",
+  authorize(scopes.meet.test),
+  async (ctx) => {
+    const userId = new ObjectId(ctx.state.token.userId);
+    const meetId = new ObjectId(ctx.params.meetId);
+
+    const meet = await Meets.findOne({ _id: meetId });
+
+    if (!meet) {
+      ctx.response.body = { message: "invalid meet id" };
+      return;
+    }
+
+    if (meet.userId === userId) {
+      ctx.response.body = { message: "user is owner" };
+      return;
+    }
+
+    const updateJson = await Meets.updateOne(
+      {
+        _id: meetId,
+      },
+      {
+        $addToSet: {
+          meetUsers: userId,
+        },
+      }
+    );
+
+    if (updateJson.matchedCount == 0 && updateJson.modifiedCount == 0) {
+      ctx.response.body = { message: "invalid meet id" };
+      return;
+    }
+
+    const meetNew = await Meets.findOne({ _id: meetId });
+
+    ctx.response.body = {
+      success: true,
+      message: meetNew,
+    };
+  }
+);
+v1Router.post(
+  "/meets/:meetId/unjoin",
+  authorize(scopes.meet.test),
+  async (ctx) => {
+    const userId = new ObjectId(ctx.state.token.userId);
+    const meetId = new ObjectId(ctx.params.meetId);
+
+    const meet = await Meets.findOne({ _id: meetId });
+
+    if (!meet) {
+      ctx.response.body = { message: "invalid meet id" };
+      return;
+    }
+
+    if (meet.userId === userId) {
+      ctx.response.body = { message: "user is owner" };
+      return;
+    }
+
+    const updateJson = await Meets.updateOne(
+      {
+        _id: meetId,
+      },
+      {
+        $pull: {
+          meetUsers: userId,
+        },
+      }
+    );
+
+    if (updateJson.matchedCount == 0 && updateJson.modifiedCount == 0) {
+      ctx.response.body = { message: "invalid meet id" };
+      return;
+    }
+
+    const meetNew = await Meets.findOne({ _id: meetId });
+
+    ctx.response.body = {
+      success: true,
+      message: meetNew,
+    };
+  }
+);

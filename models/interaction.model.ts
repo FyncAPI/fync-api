@@ -15,7 +15,7 @@ export const interactionParser = z.object({
   urlSlug: z.string(),
   frequency: z.number().optional(),
 
-  type: z.enum(["friendship", "event", "game", "life"]),
+  type: z.enum(["friendship", "event", "game"]),
   options: z.array(
     z.object({
       title: z.string(),

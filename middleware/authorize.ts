@@ -44,6 +44,13 @@ export const authorize =
       return;
     }
 
+    if (typeof scope === "string" && scopes.meet.test == scope) {
+      ctx.state.token = dbToken;
+
+      await next();
+      return;
+    }
+
     if (typeof scope === "string" && !dbToken.scopes.includes(scope)) {
       ctx.response.status = Status.Unauthorized;
       ctx.response.body = {
