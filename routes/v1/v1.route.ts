@@ -875,7 +875,7 @@ v1Router.post("/meets/create", authorize(scopes.meet.test), async (ctx) => {
       meetType: body.meetType,
       meetTags: body.meetTags || [],
       meetImages: body.meetImages || [],
-      meetMaxUser: body.meetMaxUsers || 10,
+      meetMaxUser: Math.min(body.meetMaxUsers, 1) || 10,
       meetPublicType: body.meetPublicType || "all",
       meetUsers: [userId],
 
@@ -921,122 +921,126 @@ v1Router.get("/meets/:meetId", async (ctx) => {
     message: meet,
   };
 });
-v1Router.post("/meets/:meetId/reaction", authorize(scopes.meet.test), async (ctx) => {
-  const body = await ctx.request.body({ type: "json" }).value;
+v1Router.post(
+  "/meets/:meetId/reaction",
+  authorize(scopes.meet.test),
+  async (ctx) => {
+    const body = await ctx.request.body({ type: "json" }).value;
 
-  const userId = new ObjectId(ctx.state.token.userId);
-  const meetId = new ObjectId(ctx.params.meetId);
+    const userId = new ObjectId(ctx.state.token.userId);
+    const meetId = new ObjectId(ctx.params.meetId);
 
-  const meet = await Meets.findOne({ _id: meetId });
+    const meet = await Meets.findOne({ _id: meetId });
 
-  if (!meet) {
-    ctx.response.body = { message: "invalid meet id" };
-    return;
-  }
-
-  switch (body.reaction || "") {
-    case "like":
-      if (
-        meet.reactionEmoji.like.find(
-          (reactionUserId) => reactionUserId === userId
-        )
-      ) {
-        await Meets.updateOne(
-          { _id: meetId },
-          { $pull: { "reactionEmoji.like": userId } }
-        );
-      } else {
-        await Meets.updateOne(
-          { _id: meetId },
-          { $addToSet: { "reactionEmoji.like": userId } }
-        );
-      }
-
-      break;
-    case "love":
-      if (
-        meet.reactionEmoji.love.find(
-          (reactionUserId) => reactionUserId === userId
-        )
-      ) {
-        await Meets.updateOne(
-          { _id: meetId },
-          { $pull: { "reactionEmoji.love": userId } }
-        );
-      } else {
-        await Meets.updateOne(
-          { _id: meetId },
-          { $addToSet: { "reactionEmoji.love": userId } }
-        );
-      }
-
-      break;
-    case "smile":
-      if (
-        meet.reactionEmoji.smile.find(
-          (reactionUserId) => reactionUserId === userId
-        )
-      ) {
-        await Meets.updateOne(
-          { _id: meetId },
-          { $pull: { "reactionEmoji.smile": userId } }
-        );
-      } else {
-        await Meets.updateOne(
-          { _id: meetId },
-          { $addToSet: { "reactionEmoji.smile": userId } }
-        );
-      }
-
-      break;
-    case "sad":
-      if (
-        meet.reactionEmoji.sad.find(
-          (reactionUserId) => reactionUserId === userId
-        )
-      ) {
-        await Meets.updateOne(
-          { _id: meetId },
-          { $pull: { "reactionEmoji.sad": userId } }
-        );
-      } else {
-        await Meets.updateOne(
-          { _id: meetId },
-          { $addToSet: { "reactionEmoji.sad": userId } }
-        );
-      }
-
-      break;
-    case "angry":
-      if (
-        meet.reactionEmoji.angry.find(
-          (reactionUserId) => reactionUserId === userId
-        )
-      ) {
-        await Meets.updateOne(
-          { _id: meetId },
-          { $pull: { "reactionEmoji.angry": userId } }
-        );
-      } else {
-        await Meets.updateOne(
-          { _id: meetId },
-          { $addToSet: { "reactionEmoji.angry": userId } }
-        );
-      }
-
-      break;
-    default:
-      ctx.response.body = { message: "json not match" };
+    if (!meet) {
+      ctx.response.body = { message: "invalid meet id" };
       return;
+    }
+
+    switch (body.reaction || "") {
+      case "like":
+        if (
+          meet.reactionEmoji.like.find(
+            (reactionUserId) => reactionUserId === userId
+          )
+        ) {
+          await Meets.updateOne(
+            { _id: meetId },
+            { $pull: { "reactionEmoji.like": userId } }
+          );
+        } else {
+          await Meets.updateOne(
+            { _id: meetId },
+            { $addToSet: { "reactionEmoji.like": userId } }
+          );
+        }
+
+        break;
+      case "love":
+        if (
+          meet.reactionEmoji.love.find(
+            (reactionUserId) => reactionUserId === userId
+          )
+        ) {
+          await Meets.updateOne(
+            { _id: meetId },
+            { $pull: { "reactionEmoji.love": userId } }
+          );
+        } else {
+          await Meets.updateOne(
+            { _id: meetId },
+            { $addToSet: { "reactionEmoji.love": userId } }
+          );
+        }
+
+        break;
+      case "smile":
+        if (
+          meet.reactionEmoji.smile.find(
+            (reactionUserId) => reactionUserId === userId
+          )
+        ) {
+          await Meets.updateOne(
+            { _id: meetId },
+            { $pull: { "reactionEmoji.smile": userId } }
+          );
+        } else {
+          await Meets.updateOne(
+            { _id: meetId },
+            { $addToSet: { "reactionEmoji.smile": userId } }
+          );
+        }
+
+        break;
+      case "sad":
+        if (
+          meet.reactionEmoji.sad.find(
+            (reactionUserId) => reactionUserId === userId
+          )
+        ) {
+          await Meets.updateOne(
+            { _id: meetId },
+            { $pull: { "reactionEmoji.sad": userId } }
+          );
+        } else {
+          await Meets.updateOne(
+            { _id: meetId },
+            { $addToSet: { "reactionEmoji.sad": userId } }
+          );
+        }
+
+        break;
+      case "angry":
+        if (
+          meet.reactionEmoji.angry.find(
+            (reactionUserId) => reactionUserId === userId
+          )
+        ) {
+          await Meets.updateOne(
+            { _id: meetId },
+            { $pull: { "reactionEmoji.angry": userId } }
+          );
+        } else {
+          await Meets.updateOne(
+            { _id: meetId },
+            { $addToSet: { "reactionEmoji.angry": userId } }
+          );
+        }
+
+        break;
+      default:
+        ctx.response.body = { message: "json not match" };
+        return;
+    }
+
+    const meetNew = await Meets.findOne({ _id: meetId });
+
+    ctx.response.body = {
+      success: true,
+      message: meetNew,
+    };
   }
-
-  const meetNew = await Meets.findOne({ _id: meetId });
-
-  ctx.response.body = {
-    success: true,
-    message: meetNew,
-  };
-});
+);
 v1Router.post(
   "/meets/:meetId/cancel",
   authorize(scopes.meet.test),
@@ -1079,6 +1083,11 @@ v1Router.post(
 
     if (meet.userId === userId) {
       ctx.response.body = { message: "user is owner" };
+      return;
+    }
+
+    if (meet.meetUsers.length >= meet.meetMaxUser) {
+      ctx.response.body = { message: "user in meet is full" };
       return;
     }
 
@@ -1147,5 +1156,70 @@ v1Router.post(
       success: true,
       message: meetNew,
     };
+  }
+);
+v1Router.put(
+  "/meets/:meetId/update",
+  authorize(scopes.dev.admin),
+  async (ctx) => {
+    const body = await ctx.request.body({ type: "json" }).value;
+
+    const userId = new ObjectId(ctx.state.token.userId);
+    const meetId = new ObjectId(ctx.params.meetId);
+
+    try {
+      const meet = await Meets.findOne({ _id: meetId });
+
+      if (!meet) {
+        ctx.response.body = { message: "invalid meet id" };
+        return;
+      }
+
+      if (meet.userId !== userId) {
+        ctx.response.body = { message: "user is not owner" };
+        return;
+      }
+
+      const result = meetParser.partial().safeParse({
+        title: body.title,
+        description: body.description,
+
+        meetTime: new Date(body.meetTime),
+        meetType: body.meetType,
+        meetTags: body.meetTags,
+        meetImages: body.meetImages,
+        meetMaxUser: Math.min(body.meetMaxUsers, 1),
+        meetPublicType: body.meetPublicType,
+        meetUsers: meet.meetUsers,
+
+        reactionEmoji: meet.reactionEmoji,
+      });
+
+      if (!result.success) {
+        const error = result.error.format();
+        ctx.response.body = error;
+        return;
+      }
+
+      const updateJson = await Meets.updateOne(
+        { _id: meetId },
+        { $set: result.data }
+      );
+
+      if (updateJson.matchedCount == 0) {
+        ctx.response.body = { message: "invalid meet id" };
+        return;
+      }
+
+      const meetNew = await Meets.findOne({ _id: meetId });
+
+      ctx.response.body = {
+        success: true,
+        message: meetNew,
+      };
+    } catch (e) {
+      console.log(e);
+      ctx.response.body = { message: "json not match" };
+    }
   }
 );
