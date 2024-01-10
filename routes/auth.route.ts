@@ -501,7 +501,7 @@ authRouter.post("/access_token", async (ctx) => {
     tokenType: "Bearer",
     // refresh_token,
     clientId: authCode.clientId,
-    userId: authCode.userId,
+    userId: user._id,
     expireAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5),
     scopes: authCode.scopes,
   });

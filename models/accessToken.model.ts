@@ -9,7 +9,7 @@ export const accessTokenParser = z.object({
   accessToken: z.string(),
   tokenType: z.string(),
   clientId: z.string(),
-  userId: z.instanceof(ObjectId).or(z.string()),
+  userId: z.instanceof(ObjectId),
   expireAt: z.date(),
   scopes: z.array(z.string()),
 });

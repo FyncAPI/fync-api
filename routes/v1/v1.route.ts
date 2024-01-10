@@ -38,9 +38,11 @@ export const v1Router = new Router();
 
 v1Router.get("/users/@me", authorize(scopes.profile.read), async (ctx) => {
   console.log(ctx.state.token);
-  const userId = new ObjectId(ctx.state.token.userId);
+  const userId = ctx.state.token.userId as ObjectId;
+
   // ctx.response.body = ctx.state.token;
   const user = await Users.findOne({ _id: userId });
+  console.log(user, "@me");
 
   if (!user) {
     ctx.response.status = 404;
